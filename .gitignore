@@ -1,0 +1,29 @@
+# Build outputs
+/build/
+/build-*/
+/out/
+/cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+CTestTestfile.cmake
+Makefile
+*.cmake
+*.o
+*.obj
+*.a
+*.lib
+*.exe
+
+# Test and tooling caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+coverage.xml
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db

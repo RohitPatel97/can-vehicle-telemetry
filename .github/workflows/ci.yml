@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  host-build-and-test:
+    name: ${{ matrix.name }} host tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: GCC
+            cc: gcc
+            cxx: g++
+          - name: Clang
+            cc: clang
+            cxx: clang++
+
+    env:
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure
+        run: >-
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Debug
+          -DTELEMETRY_WARNINGS_AS_ERRORS=ON
+
+      - name: Build C library, C tests, and C++ simulator
+        run: cmake --build build --parallel
+
+      - name: Run compiled unit tests
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Run compiler-independent reference tests
+        run: python3 -m unittest discover -s tests -p "test_*.py" -v
+
+      - name: Exercise fault-injection CLI
+        run: |
+          ./build/telemetry_sim --frames 6 --fault crc --fault-at 2
+          ./build/telemetry_sim --frames 6 --fault range --fault-at 2
+          ./build/telemetry_sim --frames 6 --fault sequence --fault-at 2
+          ./build/telemetry_sim --frames 6 --fault timeout --fault-at 2
+          ./build/telemetry_sim --frames 6 --fault can --fault-at 2
+
+  sanitizers:
+    name: GCC sanitizers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure AddressSanitizer and UndefinedBehaviorSanitizer
+        run: >-
+          cmake -S . -B build-sanitized -G Ninja
+          -DCMAKE_BUILD_TYPE=Debug
+          -DTELEMETRY_ENABLE_SANITIZERS=ON
+          -DTELEMETRY_WARNINGS_AS_ERRORS=ON
+
+      - name: Build
+        run: cmake --build build-sanitized --parallel
+
+      - name: Test
+        run: ctest --test-dir build-sanitized --output-on-failure
+
