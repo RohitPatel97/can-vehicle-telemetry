@@ -63,8 +63,10 @@ void telemetry_stm32_hal_on_can_error(telemetry_stm32_hal_t *context);
 
 /**
  * Main context only, with interrupts enabled. Process at most QUEUE_CAPACITY
- * frames, forward accepted data, and check timeout at each receive tick and the
- * current tick. Returns true if any new timeout occurred during this poll,
+ * frames, forward accepted data, and check timeout at each receive tick. Check
+ * the current tick only when the queue is observed empty in the same critical
+ * section as the tick read; a backlog defers this check until later polls.
+ * Returns true if any new timeout occurred during this poll,
  * including an outage followed by recovery in the same batch. Read
  * receiver.timed_out to distinguish an ongoing outage from recovered traffic.
  * UART is blocking here (10 ms timeout per accepted frame), never in an ISR.

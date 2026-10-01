@@ -137,7 +137,9 @@ bool telemetry_stm32_hal_poll(telemetry_stm32_hal_t *context)
     uint32_t saved;
     uint32_t can_errors;
     uint32_t overruns;
+    uint32_t idle_tick_ms = 0U;
     unsigned int processed;
+    bool queue_empty;
     bool entered_timeout = false;
 
     if (context == NULL) {
@@ -180,7 +182,17 @@ bool telemetry_stm32_hal_poll(telemetry_stm32_hal_t *context)
         }
     }
 
-    if (timeout_transition(context, HAL_GetTick())) {
+    /* Queued arrivals may bridge the apparent gap to the current tick. Only
+     * advance to wall time once their receive history has been processed.
+     * Capture emptiness and time together so an IRQ cannot enqueue an older
+     * arrival between the two observations. */
+    saved = lock_irqs();
+    queue_empty = context->queued == 0U;
+    if (queue_empty) {
+        idle_tick_ms = HAL_GetTick();
+    }
+    unlock_irqs(saved);
+    if (queue_empty && timeout_transition(context, idle_tick_ms)) {
         entered_timeout = true;
     }
     return entered_timeout;

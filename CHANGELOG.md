@@ -7,12 +7,16 @@ Versioning and the structure of Keep a Changelog.
 
 ### Fixed
 
+- Avoid false receive timeouts while a bounded poll leaves newer frames queued;
+  atomically snapshot queue emptiness and time before checking the current clock.
 - Detect receive outages at queued frame timestamps so a valid recovery frame
   cannot erase an outage before the next main-loop timeout check.
 - Explicit unsigned CRC arithmetic to satisfy Clang conversion warnings.
 
 ### Added
 
+- Three HAL mock regressions for continuous backlog, a real outage across poll
+  boundaries, and backlog handling through tick rollover (15 HAL cases total).
 - Twelve host integration cases compiling the STM32 adapter against a test-only
   HAL/CMSIS double; covers interrupt deferral, bounded queue handling, envelope
   rejection, fault accounting, UART failure, and outage recovery.

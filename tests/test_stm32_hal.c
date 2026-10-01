@@ -29,6 +29,7 @@ static unsigned int rx_calls;
 static unsigned int uart_calls;
 static char uart_lines[128][64];
 static void (*during_uart)(void);
+static uint32_t refill_first_ms;
 
 uint32_t __get_PRIMASK(void) { return primask; }
 void __disable_irq(void) { primask = 1U; }
@@ -85,6 +86,7 @@ static void reset_fixture(uint32_t timeout_ms)
     rx_calls = 0U;
     uart_calls = 0U;
     during_uart = NULL;
+    refill_first_ms = 0U;
     (void)memset(uart_lines, 0, sizeof(uart_lines));
 }
 
@@ -225,6 +227,106 @@ static void test_poll_is_bounded_when_interrupts_refill_queue(void)
     EXPECT(context.receiver.stats.sequence_errors == 0U);
 }
 
+static void queue_initial_batch(uint32_t received_ms)
+{
+    unsigned int index;
+    for (index = 0U; index < TELEMETRY_STM32_QUEUE_CAPACITY; ++index) {
+        receive((uint8_t)index, received_ms);
+    }
+}
+
+static void refill_with_advancing_ticks(void)
+{
+    const uint32_t offset = 3U * (uint32_t)(uart_calls - 1U);
+    receive((uint8_t)(TELEMETRY_STM32_QUEUE_CAPACITY + uart_calls - 1U),
+            refill_first_ms + offset);
+}
+
+static void test_pending_continuous_traffic_defers_wall_clock_timeout(void)
+{
+    reset_fixture(32U);
+    queue_initial_batch(0U);
+    refill_first_ms = 3U;
+    during_uart = refill_with_advancing_ticks;
+
+    /* The budget ends at tick 48, but valid arrivals at 3..48 remain queued. */
+    EXPECT(!telemetry_stm32_hal_poll(&context));
+    EXPECT(context.queued == TELEMETRY_STM32_QUEUE_CAPACITY);
+    EXPECT(context.receiver.last_accepted_ms == 0U);
+    EXPECT(context.receiver.stats.timeout_events == 0U);
+    EXPECT(!context.receiver.timed_out);
+    EXPECT(uart_calls == TELEMETRY_STM32_QUEUE_CAPACITY);
+
+    during_uart = NULL;
+    EXPECT(!telemetry_stm32_hal_poll(&context));
+    EXPECT(context.queued == 0U);
+    EXPECT(context.receiver.last_accepted_ms == 48U);
+    EXPECT(context.receiver.stats.accepted_frames == 2U * TELEMETRY_STM32_QUEUE_CAPACITY);
+    EXPECT(context.receiver.stats.sequence_errors == 0U);
+    EXPECT(context.receiver.stats.timeout_events == 0U);
+    EXPECT(uart_calls == 2U * TELEMETRY_STM32_QUEUE_CAPACITY);
+
+    tick_ms = 80U;
+    EXPECT(!telemetry_stm32_hal_poll(&context));
+    tick_ms = 81U;
+    EXPECT(telemetry_stm32_hal_poll(&context));
+    EXPECT(context.receiver.stats.timeout_events == 1U);
+    EXPECT(context.receiver.timed_out);
+}
+
+static void test_real_gap_is_reported_when_pending_batch_is_processed(void)
+{
+    reset_fixture(32U);
+    queue_initial_batch(0U);
+    refill_first_ms = 40U;
+    during_uart = refill_with_advancing_ticks;
+
+    EXPECT(!telemetry_stm32_hal_poll(&context));
+    EXPECT(context.queued == TELEMETRY_STM32_QUEUE_CAPACITY);
+    EXPECT(context.receiver.stats.timeout_events == 0U);
+
+    /* Defer the wall clock, but preserve the actual 0 -> 40 ms receive gap. */
+    during_uart = NULL;
+    EXPECT(telemetry_stm32_hal_poll(&context));
+    EXPECT(context.queued == 0U);
+    EXPECT(context.receiver.last_accepted_ms == 85U);
+    EXPECT(context.receiver.stats.accepted_frames == 2U * TELEMETRY_STM32_QUEUE_CAPACITY);
+    EXPECT(context.receiver.stats.sequence_errors == 0U);
+    EXPECT(context.receiver.stats.timeout_events == 1U);
+    EXPECT(!context.receiver.timed_out);
+    EXPECT(!telemetry_stm32_hal_poll(&context));
+    EXPECT(context.receiver.stats.timeout_events == 1U);
+}
+
+static void test_pending_traffic_preserves_timeout_order_across_rollover(void)
+{
+    const uint32_t initial_ms = UINT32_MAX - 15U;
+    reset_fixture(32U);
+    queue_initial_batch(initial_ms);
+    refill_first_ms = initial_ms + 3U;
+    during_uart = refill_with_advancing_ticks;
+
+    EXPECT(!telemetry_stm32_hal_poll(&context));
+    EXPECT(context.queued == TELEMETRY_STM32_QUEUE_CAPACITY);
+    EXPECT(context.receiver.last_accepted_ms == initial_ms);
+    EXPECT(context.receiver.stats.timeout_events == 0U);
+
+    during_uart = NULL;
+    EXPECT(!telemetry_stm32_hal_poll(&context));
+    EXPECT(context.queued == 0U);
+    EXPECT(context.receiver.last_accepted_ms == 32U);
+    EXPECT(context.receiver.stats.accepted_frames == 2U * TELEMETRY_STM32_QUEUE_CAPACITY);
+    EXPECT(context.receiver.stats.sequence_errors == 0U);
+    EXPECT(context.receiver.stats.timeout_events == 0U);
+    EXPECT(!context.receiver.timed_out);
+
+    tick_ms = 64U;
+    EXPECT(!telemetry_stm32_hal_poll(&context));
+    tick_ms = 65U;
+    EXPECT(telemetry_stm32_hal_poll(&context));
+    EXPECT(context.receiver.stats.timeout_events == 1U);
+}
+
 static void test_hal_failure_accounting_is_deferred(void)
 {
     reset_fixture(250U);
@@ -360,6 +462,12 @@ int main(void)
     run_test(test_corruption_and_sequence_are_never_forwarded, "accepted-only UART");
     run_test(test_full_queue_drops_newest_then_recovers, "queue overflow and recovery");
     run_test(test_poll_is_bounded_when_interrupts_refill_queue, "bounded poll with refill");
+    run_test(test_pending_continuous_traffic_defers_wall_clock_timeout,
+             "continuous backlog does not time out");
+    run_test(test_real_gap_is_reported_when_pending_batch_is_processed,
+             "real outage across bounded polls");
+    run_test(test_pending_traffic_preserves_timeout_order_across_rollover,
+             "backlog and tick rollover");
     run_test(test_hal_failure_accounting_is_deferred, "deferred CAN errors");
     run_test(test_uart_failure_does_not_replay_accepted_data, "UART failure policy");
     run_test(test_timeout_gap_survives_recovery_in_same_batch, "queued outage and recovery");

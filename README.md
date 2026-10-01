@@ -39,6 +39,16 @@ The [problem/solution test cases](docs/test-cases.md) provide concrete inputs,
 expected outcomes, source links, and commands an employer can reproduce.
 See [WORKFLOW.md](WORKFLOW.md) for completed work and the next three milestones.
 
+### Latest improvement: accurate timeout reporting under load
+
+When interrupts refill the queue during a bounded poll, newer received frames
+can still be waiting for validation. Comparing the last processed timestamp
+with the current clock at that point could report a false outage. The adapter
+now checks queued arrival timestamps in order and checks the current clock only
+after atomically observing an empty queue. Three new HAL mock regressions cover
+continuous traffic, a real outage across polls, and tick rollover. See the
+[reproducible scenarios](docs/test-cases.md#backlog-timeout-regression).
+
 ## What this repository demonstrates
 
 - A byte-specified 8-byte Classic CAN payload on standard ID `0x321` at
@@ -53,6 +63,7 @@ See [WORKFLOW.md](WORKFLOW.md) for completed work and the next three milestones.
 - A 16-frame circular queue that keeps validation and blocking UART out of the
   CAN ISR, with bounded draining and explicit overflow accounting
 - Detection of receive gaps even when a recovery frame is queued before polling
+- Timeout checks that preserve receive order across bounded polls and backlogs
 - Automated C, C++, and Python verification with GCC/Clang and sanitizers
 
 ## Architecture
@@ -124,6 +135,11 @@ still detecting a malicious or faulty sender that recomputes a valid CRC over
 semantically impossible data.
 
 ## Quick start
+
+Requirements: CMake 3.20+, a C11/C++17 compiler, and Python 3.10+ for the
+reference suite. Run the commands below from the repository root. To try the
+protocol without a compiler, start with the
+[Python reference suite and frame analyzer](#run-the-compiler-independent-reference-suite).
 
 ### Use the portable C API
 
@@ -252,6 +268,12 @@ stateDiagram-v2
   with a 250 ms limit is reported even if both frames are drained in one poll.
   `poll()` returns whether a new outage occurred; `receiver.timed_out` reports
   whether the outage remains active after processing any recovery traffic.
+- If a bounded poll leaves frames queued, it defers the current-clock timeout
+  check. Those frames may bridge the apparent gap since the last processed
+  sample. Subsequent polls still detect actual gaps from arrival timestamps;
+  once the queue drains, current-clock checks resume. During a backlog,
+  `receiver.timed_out` describes processed receive history, so outage reporting
+  can be delayed until that history is consumed.
 
 ### Interrupt and main-loop ownership
 
@@ -289,8 +311,19 @@ RTOS consumers require a different synchronization contract.
 | Envelope/DLC rejection and HAL/UART failure paths | HAL mock | — | CTest gate |
 | Queue overflow, order, recovery, bounded refill | HAL mock | — | CTest gate |
 | Queued receive gap followed by recovery in one poll | HAL mock | — | CTest gate |
+| Continuous backlog, real gap across polls, and backlog tick rollover | HAL mock | — | CTest gate |
 
-Local verification snapshot (2026-09-04): fresh native Zig 0.16.0 / Clang 21.1.0
+Local verification snapshot (2026-10-01): a Windows CMake/Ninja build with
+Zig 0.16.0 / Clang 21.1.0 passed **8 C protocol cases**, **15 HAL mock cases**,
+and all **8 CTest entries**. The Python reference suite passed **13 tests**.
+The three new HAL regressions failed against the previous adapter (12 failed
+assertions) and passed after the fix. Strict warnings remain enabled, including
+`-Wconversion -Werror`. The local CMake build used an explicit Zig archive-rule
+override; GCC/Clang and sanitizer validation are separate GitHub CI checks.
+These results establish host behavior, not physical CAN/UART timing or a Cube
+firmware build.
+
+Earlier verification snapshot (2026-09-04): fresh native Zig 0.16.0 / Clang 21.1.0
 builds passed **8 C protocol cases**, **12 HAL mock integration cases**, and all
 **8 CTest entries** (the two C suites plus six simulator scenarios). The
 dependency-free Python suite passed **13 tests**. C and C++ builds used strict
