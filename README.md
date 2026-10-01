@@ -323,6 +323,12 @@ override; GCC/Clang and sanitizer validation are separate GitHub CI checks.
 These results establish host behavior, not physical CAN/UART timing or a Cube
 firmware build.
 
+Published implementation verification (2026-10-01):
+[`1894bab`](https://github.com/RohitPatel97/can-vehicle-telemetry/commit/1894bab7ee2a408ee77622769f1df92ab9abd56b)
+passed GCC host tests, Clang host tests, and GCC
+AddressSanitizer/UndefinedBehaviorSanitizer in
+[GitHub CI run 36881160831](https://github.com/RohitPatel97/can-vehicle-telemetry/actions/runs/36881160831).
+
 Earlier verification snapshot (2026-09-04): fresh native Zig 0.16.0 / Clang 21.1.0
 builds passed **8 C protocol cases**, **12 HAL mock integration cases**, and all
 **8 CTest entries** (the two C suites plus six simulator scenarios). The
