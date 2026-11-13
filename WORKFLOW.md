@@ -85,6 +85,31 @@ Local execution evidence is recorded in the README verification snapshot.
   commit after GCC, Clang, and sanitizer jobs pass. Only generated HTML and
   evidence JSON are included in the Pages artifact.
 
+## Public demo publication — 2026-11-13
+
+- **Published implementation:**
+  [`cb12be3`](https://github.com/RohitPatel97/can-vehicle-telemetry/commit/cb12be3ea7492dd29e3e4fe0a4fa5622c81668aa).
+- **Shareable demo:** [CAN telemetry engineering walkthrough](https://rohitpatel97.github.io/can-vehicle-telemetry/).
+  It is publicly accessible over HTTPS without a GitHub sign-in.
+- **CI and deployment:** [run 43503936748](https://github.com/RohitPatel97/can-vehicle-telemetry/actions/runs/43503936748)
+  passed GCC host tests, Clang host tests, GCC ASan/UBSan, and the Pages
+  publishing job. Publishing rebuilds the host programs, captures fresh
+  verified output, and uploads only the generated HTML and evidence JSON.
+- **Live verification:** an unauthenticated browser loaded the public page and
+  checked all six scenarios / 36 frames against the deployed JSON, including
+  payloads, decisions, UART rows, counters, and logs. Keyboard playback,
+  cross-scenario navigation, and the downloaded JSON passed. Desktop and mobile
+  layouts had no horizontal overflow or script errors. The capture revision
+  matched the published implementation, its working tree was clean, and every
+  captured source hash matched the corresponding Git blob.
+- **Maintenance:** updates on `main` deploy only after both compiler jobs and
+  the sanitizer job succeed. Pull requests do not deploy. The checked-in offline
+  copy remains the original local capture; the live page carries evidence for
+  its deployment commit.
+- **Limits:** the public page replays host execution and HAL mock results.
+  Physical CAN/UART validation and complete Cube firmware compilation remain
+  pending; publication does not expand those claims.
+
 ## Change record — 2026-10-01
 
 - **Problem:** after processing its 16-frame budget, the adapter compared the
