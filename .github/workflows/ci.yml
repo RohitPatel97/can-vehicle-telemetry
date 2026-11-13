@@ -29,7 +29,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Configure
         run: >-
@@ -46,6 +46,9 @@ jobs:
       - name: Run compiler-independent reference tests
         run: python3 -m unittest discover -s tests -p "test_*.py" -v
 
+      - name: Capture and verify the offline interview demo
+        run: python3 scripts/create_demo.py --build-dir build --output build/demo/index.html
+
       - name: Exercise fault-injection CLI
         run: |
           ./build/telemetry_sim --frames 6 --fault crc --fault-at 2
@@ -59,7 +62,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Configure AddressSanitizer and UndefinedBehaviorSanitizer
         run: >-
@@ -73,4 +76,44 @@ jobs:
 
       - name: Test
         run: ctest --test-dir build-sanitized --output-on-failure
+
+  publish-demo:
+    name: Publish verified demo
+    needs: [host-build-and-test, sanitizers]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out the tested commit
+        uses: actions/checkout@v6
+
+      - name: Configure host executables
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+
+      - name: Build host executables
+        run: cmake --build build --parallel
+
+      - name: Capture fresh evidence from the published commit
+        run: python3 scripts/create_demo.py --build-dir build --output build/site/index.html
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload the demo and evidence only
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: build/site
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 

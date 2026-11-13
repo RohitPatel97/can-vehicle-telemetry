@@ -183,7 +183,9 @@ int run(const Options &options)
             if (options.fault == Fault::timeout) {
                 now_ms += timeout_ms + 1U;
                 if (telemetry_receiver_check_timeout(&receiver, now_ms)) {
-                    std::cout << "EVENT timeout elapsed_ms=" << timeout_ms + 1U << '\n';
+                    std::cout << "EVENT timeout elapsed_ms="
+                              << static_cast<std::uint32_t>(now_ms - receiver.last_accepted_ms)
+                              << '\n';
                 }
             } else if (options.fault == Fault::can_bus) {
                 const telemetry_status_t can_status =

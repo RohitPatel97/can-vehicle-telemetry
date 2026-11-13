@@ -1,0 +1,838 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-13T18:56:54Z",
+  "git_revision": "cbab992e21dae5d1ae285c5838a61f6ce6005c6b",
+  "working_tree_dirty": true,
+  "source_sha256": {
+    "CMakeLists.txt": "1ee1a47f05176c26b565aab4179d3fb0430d4972dfc76f8edafd7ac1de6dbe71",
+    "apps/simulator.cpp": "a1adddc40f5068393c9ff6e3aee2fcfa9a3e2d114c5d51108f3b12b60d10d752",
+    "demo/template.html": "f355fe772cd5595268f966577f5c16c2e379f91de801b4e9c367eeae36aa4367",
+    "include/telemetry/protocol.h": "37ae840d034a311b6813f4746ac946e2e96056194ba59e60af52b658a009b51b",
+    "include/telemetry/receiver.h": "72a1188aac9914d01e1b2db242b973b7c2621cf0e040c8dbb81719ec95fc0530",
+    "platform/stm32f446re/telemetry_stm32_hal.c": "425836f92fad62b20d407a35e25bb37feb2d66548e0b67d9dd000310bb3dd4ab",
+    "platform/stm32f446re/telemetry_stm32_hal.h": "c13a39f8090651d5663b3f94d88e6c8e5e9252cdc591fe6a26dddd638281353f",
+    "scripts/create_demo.py": "8f7900c152ffc87d46f0586b33774ab12a6ee73f8582350749a2a8deac3a98d7",
+    "src/protocol.c": "eee799dbdc005103fa005c2d62db10bb29507cd47ee82c7a798d02c004b2d86f",
+    "src/receiver.c": "8cc8607f5601824792c3d953c4a617f5e9e901c4ce95ff98c8458d3399f80406",
+    "tests/mocks/stm32f4xx_hal.h": "63ad7da6a9e186cbd30bf26d347d251f9b95918bf0c1a67dcd42ad51f5523f2b",
+    "tests/test_demo.py": "78960c52da66b66467a1d0cf39fc6bb3cfee2332fa73e016bbaf096b02f51f70",
+    "tests/test_stm32_hal.c": "e71f04f7f388ec6758214b84b93dc4c250deed8f6fc93c36fbdf18a43b05c496",
+    "tests/test_telemetry.c": "42e7423adc02f80f9f857006ca657c323fa30261d0c8415001e1345632bb0763"
+  },
+  "binary_sha256": {
+    "build-review/telemetry_sim.exe": "6cbdde6c1346b2d892f0e4186bd56709880a3c87acb588bb31c45273328eb724",
+    "build-review/telemetry_tests.exe": "3b4d6ef6c43c86a988a1b6dd2cb252e8bf04ec9f3a8f3ac091393b4ff1adb278",
+    "build-review/telemetry_hal_tests.exe": "a3e0ddd0c0f0709d900e00e9f162921337a36e412ac9ce8cde557118163928ba"
+  },
+  "scenarios": [
+    {
+      "id": "none",
+      "title": "Nominal telemetry",
+      "command": [
+        "build-review/telemetry_sim.exe",
+        "--frames",
+        "6",
+        "--fault",
+        "none",
+        "--fault-at",
+        "2"
+      ],
+      "exit_code": 0,
+      "summary": {
+        "accepted": 6,
+        "crc": 0,
+        "range": 0,
+        "sequence": 0,
+        "timeout": 0,
+        "can": 0
+      },
+      "frames": [
+        {
+          "index": 0,
+          "payload": [
+            "00",
+            "68",
+            "10",
+            "7A",
+            "E8",
+            "35",
+            "03",
+            "CD"
+          ],
+          "status": "ok",
+          "uart": "TEL,0,42.00,82,13800,3"
+        },
+        {
+          "index": 1,
+          "payload": [
+            "01",
+            "8D",
+            "10",
+            "7B",
+            "ED",
+            "35",
+            "03",
+            "1F"
+          ],
+          "status": "ok",
+          "uart": "TEL,1,42.37,83,13805,3"
+        },
+        {
+          "index": 2,
+          "payload": [
+            "02",
+            "B2",
+            "10",
+            "7C",
+            "F2",
+            "35",
+            "03",
+            "6B"
+          ],
+          "status": "ok",
+          "uart": "TEL,2,42.74,84,13810,3"
+        },
+        {
+          "index": 3,
+          "payload": [
+            "03",
+            "D7",
+            "10",
+            "7D",
+            "F7",
+            "35",
+            "03",
+            "19"
+          ],
+          "status": "ok",
+          "uart": "TEL,3,43.11,85,13815,3"
+        },
+        {
+          "index": 4,
+          "payload": [
+            "04",
+            "FC",
+            "10",
+            "7E",
+            "FC",
+            "35",
+            "03",
+            "45"
+          ],
+          "status": "ok",
+          "uart": "TEL,4,43.48,86,13820,3"
+        },
+        {
+          "index": 5,
+          "payload": [
+            "05",
+            "21",
+            "11",
+            "7F",
+            "01",
+            "36",
+            "03",
+            "9B"
+          ],
+          "status": "ok",
+          "uart": "TEL,5,43.85,87,13825,3"
+        }
+      ],
+      "events": [],
+      "stdout": "CAN telemetry simulation: id=0x321 bitrate=500000 frame_bytes=8\nRX[0] 00 68 10 7A E8 35 03 CD -> ok\nUART> TEL,0,42.00,82,13800,3\n\nRX[1] 01 8D 10 7B ED 35 03 1F -> ok\nUART> TEL,1,42.37,83,13805,3\n\nRX[2] 02 B2 10 7C F2 35 03 6B -> ok\nUART> TEL,2,42.74,84,13810,3\n\nRX[3] 03 D7 10 7D F7 35 03 19 -> ok\nUART> TEL,3,43.11,85,13815,3\n\nRX[4] 04 FC 10 7E FC 35 03 45 -> ok\nUART> TEL,4,43.48,86,13820,3\n\nRX[5] 05 21 11 7F 01 36 03 9B -> ok\nUART> TEL,5,43.85,87,13825,3\n\nSUMMARY accepted=6 crc=0 range=0 sequence=0 timeout=0 can=0\n"
+    },
+    {
+      "id": "crc",
+      "title": "Corruption detection",
+      "command": [
+        "build-review/telemetry_sim.exe",
+        "--frames",
+        "6",
+        "--fault",
+        "crc",
+        "--fault-at",
+        "2"
+      ],
+      "exit_code": 0,
+      "summary": {
+        "accepted": 4,
+        "crc": 1,
+        "range": 0,
+        "sequence": 1,
+        "timeout": 0,
+        "can": 0
+      },
+      "frames": [
+        {
+          "index": 0,
+          "payload": [
+            "00",
+            "68",
+            "10",
+            "7A",
+            "E8",
+            "35",
+            "03",
+            "CD"
+          ],
+          "status": "ok",
+          "uart": "TEL,0,42.00,82,13800,3"
+        },
+        {
+          "index": 1,
+          "payload": [
+            "01",
+            "8D",
+            "10",
+            "7B",
+            "ED",
+            "35",
+            "03",
+            "1F"
+          ],
+          "status": "ok",
+          "uart": "TEL,1,42.37,83,13805,3"
+        },
+        {
+          "index": 2,
+          "payload": [
+            "02",
+            "B3",
+            "10",
+            "7C",
+            "F2",
+            "35",
+            "03",
+            "6B"
+          ],
+          "status": "crc mismatch",
+          "uart": null
+        },
+        {
+          "index": 3,
+          "payload": [
+            "03",
+            "D7",
+            "10",
+            "7D",
+            "F7",
+            "35",
+            "03",
+            "19"
+          ],
+          "status": "sequence mismatch",
+          "uart": null
+        },
+        {
+          "index": 4,
+          "payload": [
+            "04",
+            "FC",
+            "10",
+            "7E",
+            "FC",
+            "35",
+            "03",
+            "45"
+          ],
+          "status": "ok",
+          "uart": "TEL,4,43.48,86,13820,3"
+        },
+        {
+          "index": 5,
+          "payload": [
+            "05",
+            "21",
+            "11",
+            "7F",
+            "01",
+            "36",
+            "03",
+            "9B"
+          ],
+          "status": "ok",
+          "uart": "TEL,5,43.85,87,13825,3"
+        }
+      ],
+      "events": [],
+      "stdout": "CAN telemetry simulation: id=0x321 bitrate=500000 frame_bytes=8\nRX[0] 00 68 10 7A E8 35 03 CD -> ok\nUART> TEL,0,42.00,82,13800,3\n\nRX[1] 01 8D 10 7B ED 35 03 1F -> ok\nUART> TEL,1,42.37,83,13805,3\n\nRX[2] 02 B3 10 7C F2 35 03 6B -> crc mismatch\nRX[3] 03 D7 10 7D F7 35 03 19 -> sequence mismatch\nRX[4] 04 FC 10 7E FC 35 03 45 -> ok\nUART> TEL,4,43.48,86,13820,3\n\nRX[5] 05 21 11 7F 01 36 03 9B -> ok\nUART> TEL,5,43.85,87,13825,3\n\nSUMMARY accepted=4 crc=1 range=0 sequence=1 timeout=0 can=0\n"
+    },
+    {
+      "id": "range",
+      "title": "Semantic range rejection",
+      "command": [
+        "build-review/telemetry_sim.exe",
+        "--frames",
+        "6",
+        "--fault",
+        "range",
+        "--fault-at",
+        "2"
+      ],
+      "exit_code": 0,
+      "summary": {
+        "accepted": 4,
+        "crc": 0,
+        "range": 1,
+        "sequence": 1,
+        "timeout": 0,
+        "can": 0
+      },
+      "frames": [
+        {
+          "index": 0,
+          "payload": [
+            "00",
+            "68",
+            "10",
+            "7A",
+            "E8",
+            "35",
+            "03",
+            "CD"
+          ],
+          "status": "ok",
+          "uart": "TEL,0,42.00,82,13800,3"
+        },
+        {
+          "index": 1,
+          "payload": [
+            "01",
+            "8D",
+            "10",
+            "7B",
+            "ED",
+            "35",
+            "03",
+            "1F"
+          ],
+          "status": "ok",
+          "uart": "TEL,1,42.37,83,13805,3"
+        },
+        {
+          "index": 2,
+          "payload": [
+            "02",
+            "FF",
+            "FF",
+            "7C",
+            "F2",
+            "35",
+            "03",
+            "73"
+          ],
+          "status": "value out of range",
+          "uart": null
+        },
+        {
+          "index": 3,
+          "payload": [
+            "03",
+            "D7",
+            "10",
+            "7D",
+            "F7",
+            "35",
+            "03",
+            "19"
+          ],
+          "status": "sequence mismatch",
+          "uart": null
+        },
+        {
+          "index": 4,
+          "payload": [
+            "04",
+            "FC",
+            "10",
+            "7E",
+            "FC",
+            "35",
+            "03",
+            "45"
+          ],
+          "status": "ok",
+          "uart": "TEL,4,43.48,86,13820,3"
+        },
+        {
+          "index": 5,
+          "payload": [
+            "05",
+            "21",
+            "11",
+            "7F",
+            "01",
+            "36",
+            "03",
+            "9B"
+          ],
+          "status": "ok",
+          "uart": "TEL,5,43.85,87,13825,3"
+        }
+      ],
+      "events": [],
+      "stdout": "CAN telemetry simulation: id=0x321 bitrate=500000 frame_bytes=8\nRX[0] 00 68 10 7A E8 35 03 CD -> ok\nUART> TEL,0,42.00,82,13800,3\n\nRX[1] 01 8D 10 7B ED 35 03 1F -> ok\nUART> TEL,1,42.37,83,13805,3\n\nRX[2] 02 FF FF 7C F2 35 03 73 -> value out of range\nRX[3] 03 D7 10 7D F7 35 03 19 -> sequence mismatch\nRX[4] 04 FC 10 7E FC 35 03 45 -> ok\nUART> TEL,4,43.48,86,13820,3\n\nRX[5] 05 21 11 7F 01 36 03 9B -> ok\nUART> TEL,5,43.85,87,13825,3\n\nSUMMARY accepted=4 crc=0 range=1 sequence=1 timeout=0 can=0\n"
+    },
+    {
+      "id": "sequence",
+      "title": "Sequence discontinuity and recovery",
+      "command": [
+        "build-review/telemetry_sim.exe",
+        "--frames",
+        "6",
+        "--fault",
+        "sequence",
+        "--fault-at",
+        "2"
+      ],
+      "exit_code": 0,
+      "summary": {
+        "accepted": 5,
+        "crc": 0,
+        "range": 0,
+        "sequence": 1,
+        "timeout": 0,
+        "can": 0
+      },
+      "frames": [
+        {
+          "index": 0,
+          "payload": [
+            "00",
+            "68",
+            "10",
+            "7A",
+            "E8",
+            "35",
+            "03",
+            "CD"
+          ],
+          "status": "ok",
+          "uart": "TEL,0,42.00,82,13800,3"
+        },
+        {
+          "index": 1,
+          "payload": [
+            "01",
+            "8D",
+            "10",
+            "7B",
+            "ED",
+            "35",
+            "03",
+            "1F"
+          ],
+          "status": "ok",
+          "uart": "TEL,1,42.37,83,13805,3"
+        },
+        {
+          "index": 2,
+          "payload": [
+            "03",
+            "B2",
+            "10",
+            "7C",
+            "F2",
+            "35",
+            "03",
+            "36"
+          ],
+          "status": "sequence mismatch",
+          "uart": null
+        },
+        {
+          "index": 3,
+          "payload": [
+            "04",
+            "D7",
+            "10",
+            "7D",
+            "F7",
+            "35",
+            "03",
+            "97"
+          ],
+          "status": "ok",
+          "uart": "TEL,4,43.11,85,13815,3"
+        },
+        {
+          "index": 4,
+          "payload": [
+            "05",
+            "FC",
+            "10",
+            "7E",
+            "FC",
+            "35",
+            "03",
+            "18"
+          ],
+          "status": "ok",
+          "uart": "TEL,5,43.48,86,13820,3"
+        },
+        {
+          "index": 5,
+          "payload": [
+            "06",
+            "21",
+            "11",
+            "7F",
+            "01",
+            "36",
+            "03",
+            "7C"
+          ],
+          "status": "ok",
+          "uart": "TEL,6,43.85,87,13825,3"
+        }
+      ],
+      "events": [],
+      "stdout": "CAN telemetry simulation: id=0x321 bitrate=500000 frame_bytes=8\nRX[0] 00 68 10 7A E8 35 03 CD -> ok\nUART> TEL,0,42.00,82,13800,3\n\nRX[1] 01 8D 10 7B ED 35 03 1F -> ok\nUART> TEL,1,42.37,83,13805,3\n\nRX[2] 03 B2 10 7C F2 35 03 36 -> sequence mismatch\nRX[3] 04 D7 10 7D F7 35 03 97 -> ok\nUART> TEL,4,43.11,85,13815,3\n\nRX[4] 05 FC 10 7E FC 35 03 18 -> ok\nUART> TEL,5,43.48,86,13820,3\n\nRX[5] 06 21 11 7F 01 36 03 7C -> ok\nUART> TEL,6,43.85,87,13825,3\n\nSUMMARY accepted=5 crc=0 range=0 sequence=1 timeout=0 can=0\n"
+    },
+    {
+      "id": "timeout",
+      "title": "Receive outage and recovery",
+      "command": [
+        "build-review/telemetry_sim.exe",
+        "--frames",
+        "6",
+        "--fault",
+        "timeout",
+        "--fault-at",
+        "2"
+      ],
+      "exit_code": 0,
+      "summary": {
+        "accepted": 6,
+        "crc": 0,
+        "range": 0,
+        "sequence": 0,
+        "timeout": 1,
+        "can": 0
+      },
+      "frames": [
+        {
+          "index": 0,
+          "payload": [
+            "00",
+            "68",
+            "10",
+            "7A",
+            "E8",
+            "35",
+            "03",
+            "CD"
+          ],
+          "status": "ok",
+          "uart": "TEL,0,42.00,82,13800,3"
+        },
+        {
+          "index": 1,
+          "payload": [
+            "01",
+            "8D",
+            "10",
+            "7B",
+            "ED",
+            "35",
+            "03",
+            "1F"
+          ],
+          "status": "ok",
+          "uart": "TEL,1,42.37,83,13805,3"
+        },
+        {
+          "index": 2,
+          "payload": [
+            "02",
+            "B2",
+            "10",
+            "7C",
+            "F2",
+            "35",
+            "03",
+            "6B"
+          ],
+          "status": "ok",
+          "uart": "TEL,2,42.74,84,13810,3"
+        },
+        {
+          "index": 3,
+          "payload": [
+            "03",
+            "D7",
+            "10",
+            "7D",
+            "F7",
+            "35",
+            "03",
+            "19"
+          ],
+          "status": "ok",
+          "uart": "TEL,3,43.11,85,13815,3"
+        },
+        {
+          "index": 4,
+          "payload": [
+            "04",
+            "FC",
+            "10",
+            "7E",
+            "FC",
+            "35",
+            "03",
+            "45"
+          ],
+          "status": "ok",
+          "uart": "TEL,4,43.48,86,13820,3"
+        },
+        {
+          "index": 5,
+          "payload": [
+            "05",
+            "21",
+            "11",
+            "7F",
+            "01",
+            "36",
+            "03",
+            "9B"
+          ],
+          "status": "ok",
+          "uart": "TEL,5,43.85,87,13825,3"
+        }
+      ],
+      "events": [
+        "EVENT timeout elapsed_ms=271"
+      ],
+      "stdout": "CAN telemetry simulation: id=0x321 bitrate=500000 frame_bytes=8\nRX[0] 00 68 10 7A E8 35 03 CD -> ok\nUART> TEL,0,42.00,82,13800,3\n\nRX[1] 01 8D 10 7B ED 35 03 1F -> ok\nUART> TEL,1,42.37,83,13805,3\n\nEVENT timeout elapsed_ms=271\nRX[2] 02 B2 10 7C F2 35 03 6B -> ok\nUART> TEL,2,42.74,84,13810,3\n\nRX[3] 03 D7 10 7D F7 35 03 19 -> ok\nUART> TEL,3,43.11,85,13815,3\n\nRX[4] 04 FC 10 7E FC 35 03 45 -> ok\nUART> TEL,4,43.48,86,13820,3\n\nRX[5] 05 21 11 7F 01 36 03 9B -> ok\nUART> TEL,5,43.85,87,13825,3\n\nSUMMARY accepted=6 crc=0 range=0 sequence=0 timeout=1 can=0\n"
+    },
+    {
+      "id": "can",
+      "title": "CAN controller error and recovery",
+      "command": [
+        "build-review/telemetry_sim.exe",
+        "--frames",
+        "6",
+        "--fault",
+        "can",
+        "--fault-at",
+        "2"
+      ],
+      "exit_code": 0,
+      "summary": {
+        "accepted": 4,
+        "crc": 0,
+        "range": 0,
+        "sequence": 1,
+        "timeout": 0,
+        "can": 1
+      },
+      "frames": [
+        {
+          "index": 0,
+          "payload": [
+            "00",
+            "68",
+            "10",
+            "7A",
+            "E8",
+            "35",
+            "03",
+            "CD"
+          ],
+          "status": "ok",
+          "uart": "TEL,0,42.00,82,13800,3"
+        },
+        {
+          "index": 1,
+          "payload": [
+            "01",
+            "8D",
+            "10",
+            "7B",
+            "ED",
+            "35",
+            "03",
+            "1F"
+          ],
+          "status": "ok",
+          "uart": "TEL,1,42.37,83,13805,3"
+        },
+        {
+          "index": 2,
+          "payload": [],
+          "status": "can controller error",
+          "uart": null
+        },
+        {
+          "index": 3,
+          "payload": [
+            "03",
+            "D7",
+            "10",
+            "7D",
+            "F7",
+            "35",
+            "03",
+            "19"
+          ],
+          "status": "sequence mismatch",
+          "uart": null
+        },
+        {
+          "index": 4,
+          "payload": [
+            "04",
+            "FC",
+            "10",
+            "7E",
+            "FC",
+            "35",
+            "03",
+            "45"
+          ],
+          "status": "ok",
+          "uart": "TEL,4,43.48,86,13820,3"
+        },
+        {
+          "index": 5,
+          "payload": [
+            "05",
+            "21",
+            "11",
+            "7F",
+            "01",
+            "36",
+            "03",
+            "9B"
+          ],
+          "status": "ok",
+          "uart": "TEL,5,43.85,87,13825,3"
+        }
+      ],
+      "events": [
+        "EVENT can controller error"
+      ],
+      "stdout": "CAN telemetry simulation: id=0x321 bitrate=500000 frame_bytes=8\nRX[0] 00 68 10 7A E8 35 03 CD -> ok\nUART> TEL,0,42.00,82,13800,3\n\nRX[1] 01 8D 10 7B ED 35 03 1F -> ok\nUART> TEL,1,42.37,83,13805,3\n\nEVENT can controller error\nRX[2] controller did not deliver a payload\nRX[3] 03 D7 10 7D F7 35 03 19 -> sequence mismatch\nRX[4] 04 FC 10 7E FC 35 03 45 -> ok\nUART> TEL,4,43.48,86,13820,3\n\nRX[5] 05 21 11 7F 01 36 03 9B -> ok\nUART> TEL,5,43.85,87,13825,3\n\nSUMMARY accepted=4 crc=0 range=0 sequence=1 timeout=0 can=1\n"
+    }
+  ],
+  "suites": [
+    {
+      "id": "protocol",
+      "title": "C protocol host tests",
+      "command": [
+        "build-review/telemetry_tests.exe"
+      ],
+      "exit_code": 0,
+      "cases": [
+        {
+          "name": "crc standard check vector",
+          "status": "PASS"
+        },
+        {
+          "name": "round trip and byte order",
+          "status": "PASS"
+        },
+        {
+          "name": "boundary values",
+          "status": "PASS"
+        },
+        {
+          "name": "encoder rejects invalid input",
+          "status": "PASS"
+        },
+        {
+          "name": "decoder fault paths",
+          "status": "PASS"
+        },
+        {
+          "name": "receiver sequence wrap and recovery",
+          "status": "PASS"
+        },
+        {
+          "name": "receiver error counters",
+          "status": "PASS"
+        },
+        {
+          "name": "timeout transition and timer rollover",
+          "status": "PASS"
+        }
+      ],
+      "total": 8,
+      "stdout": "PASS crc standard check vector\nPASS round trip and byte order\nPASS boundary values\nPASS encoder rejects invalid input\nPASS decoder fault paths\nPASS receiver sequence wrap and recovery\nPASS receiver error counters\nPASS timeout transition and timer rollover\n8 tests, 0 failed assertions\n"
+    },
+    {
+      "id": "hal",
+      "title": "STM32 adapter with HAL/CMSIS mocks",
+      "command": [
+        "build-review/telemetry_hal_tests.exe"
+      ],
+      "exit_code": 0,
+      "cases": [
+        {
+          "name": "ISR deferral and IRQ mask",
+          "status": "PASS"
+        },
+        {
+          "name": "envelope and DLC rejection",
+          "status": "PASS"
+        },
+        {
+          "name": "accepted-only UART",
+          "status": "PASS"
+        },
+        {
+          "name": "queue overflow and recovery",
+          "status": "PASS"
+        },
+        {
+          "name": "bounded poll with refill",
+          "status": "PASS"
+        },
+        {
+          "name": "continuous backlog does not time out",
+          "status": "PASS"
+        },
+        {
+          "name": "real outage across bounded polls",
+          "status": "PASS"
+        },
+        {
+          "name": "backlog and tick rollover",
+          "status": "PASS"
+        },
+        {
+          "name": "deferred CAN errors",
+          "status": "PASS"
+        },
+        {
+          "name": "UART failure policy",
+          "status": "PASS"
+        },
+        {
+          "name": "queued outage and recovery",
+          "status": "PASS"
+        },
+        {
+          "name": "receive tick and rollover",
+          "status": "PASS"
+        },
+        {
+          "name": "optional UART and timeout",
+          "status": "PASS"
+        },
+        {
+          "name": "deferred counter saturation",
+          "status": "PASS"
+        },
+        {
+          "name": "null argument handling",
+          "status": "PASS"
+        }
+      ],
+      "total": 15,
+      "stdout": "PASS ISR deferral and IRQ mask\nPASS envelope and DLC rejection\nPASS accepted-only UART\nPASS queue overflow and recovery\nPASS bounded poll with refill\nPASS continuous backlog does not time out\nPASS real outage across bounded polls\nPASS backlog and tick rollover\nPASS deferred CAN errors\nPASS UART failure policy\nPASS queued outage and recovery\nPASS receive tick and rollover\nPASS optional UART and timeout\nPASS deferred counter saturation\nPASS null argument handling\n15 tests, 0 failed assertions\n"
+    }
+  ]
+}

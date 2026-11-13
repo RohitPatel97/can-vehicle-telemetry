@@ -7,6 +7,8 @@ Versioning and the structure of Keep a Changelog.
 
 ### Fixed
 
+- Simulator timeout diagnostics report the full 271 ms simulated receive gap,
+  including the normal 20 ms interval before the injected 251 ms delay.
 - Avoid false receive timeouts while a bounded poll leaves newer frames queued;
   atomically snapshot queue emptiness and time before checking the current clock.
 - Detect receive outages at queued frame timestamps so a valid recovery frame
@@ -15,6 +17,9 @@ Versioning and the structure of Keep a Changelog.
 
 ### Added
 
+- Offline interview demo with captured C/C++ fault scenarios, frame inspection,
+  UART forwarding evidence, HAL results, and a five-minute presenter guide.
+- Standard-library Python capture validation and a CI demo-generation step.
 - Three HAL mock regressions for continuous backlog, a real outage across poll
   boundaries, and backlog handling through tick rollover (15 HAL cases total).
 - Twelve host integration cases compiling the STM32 adapter against a test-only

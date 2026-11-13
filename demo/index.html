@@ -1,0 +1,1113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="An offline engineering walkthrough of captured CAN telemetry host tests, fault handling, and recovery.">
+  <title>CAN Telemetry — Engineering walkthrough</title>
+  <style>
+    :root{--bg:#0d1623;--panel:#142131;--line:#2a394b;--muted:#a3b2c4;--white:#f4f4ee;--ink:#172633;--paper:#f4f4ee;--paper-line:#d8ddd9;--teal:#77d7bd;--teal-dark:#196a59;--orange:#ffad6d;--orange-dark:#a7481c;--mono:Consolas,"SFMono-Regular","Liberation Mono",monospace;--sans:"Segoe UI",Arial,sans-serif}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--white);font:15px/1.6 var(--sans);-webkit-font-smoothing:antialiased}button,input{font:inherit}button,a,summary,input{touch-action:manipulation}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.4}button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--orange);outline-offset:4px}a{color:inherit}button{color:inherit}h1,h2,h3,p{margin:0}h1,h2,h3{line-height:1.15;letter-spacing:-.035em}button,summary{ -webkit-tap-highlight-color:transparent}::selection{background:#ffc193;color:#172633}.wrap{max-width:1360px;margin:0 auto;padding:0 44px}.skip{position:absolute;left:24px;top:-80px;z-index:20;background:var(--paper);color:var(--ink);padding:12px 20px}.skip:focus{top:12px}.site-header{border-bottom:1px solid var(--line)}.header-inner{min-height:90px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{display:flex;align-items:center;gap:14px}.mark{height:36px;width:36px;border:1px solid var(--teal);display:grid;grid-template-columns:repeat(2,5px);grid-template-rows:repeat(2,5px);align-content:center;justify-content:center;gap:4px;transform:rotate(-4deg)}.mark i{background:var(--teal)}.brand-title{font-size:16px;font-weight:650;letter-spacing:-.02em}.brand-title span{font-weight:400;color:var(--muted)}.eyebrow{font:11px/1.4 var(--mono);text-transform:uppercase;letter-spacing:.13em}.pill{display:inline-flex;align-items:center;gap:9px;white-space:nowrap;font:11px/1.4 var(--mono);border:1px solid #315c56;padding:9px 12px;border-radius:30px;color:var(--teal)}.dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:0 0 auto}.hero{display:flex;justify-content:space-between;align-items:flex-end;gap:36px;padding:46px 0 33px}.hero h1{font-size:clamp(30px,3.3vw,46px);font-weight:600;max-width:760px}.hero p{color:var(--muted);max-width:690px;margin-top:15px;font-size:15px}.hero .eyebrow{color:var(--orange);margin-bottom:14px}.hero-meta{flex:0 0 auto;display:flex;gap:30px;padding-bottom:5px}.hero-number{font:34px/1 var(--mono);letter-spacing:-.07em}.hero-number span{font-size:14px;color:var(--muted);letter-spacing:0}.hero-meta small{display:block;color:var(--muted);font-size:11px;margin-top:10px}.boundary{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid var(--line);border-radius:5px;color:var(--muted);font-size:12px;margin-bottom:28px}.boundary strong{color:var(--white);font-weight:600}.boundary .eyebrow{color:var(--teal);white-space:nowrap}.workspace{display:grid;grid-template-columns:238px minmax(0,1fr);gap:24px;align-items:start}.sidebar-label{display:flex;justify-content:space-between;gap:12px;color:var(--muted);margin:3px 0 14px}.scenario-list{display:grid;gap:7px}.scenario-button{width:100%;border:1px solid transparent;background:transparent;display:grid;grid-template-columns:27px 1fr 14px;align-items:center;gap:11px;text-align:left;padding:15px 13px;border-radius:5px;transition:background .15s,border-color .15s}.scenario-button:hover{background:#182838}.scenario-button[aria-pressed=true]{background:#20313d;border-color:#446260}.scenario-button[aria-pressed=true] .scenario-n{color:var(--teal)}.scenario-n{font:11px var(--mono);color:#8395a9;align-self:start;padding-top:3px}.scenario-name{font-size:13px;font-weight:600;line-height:1.3}.scenario-hint{display:block;font-size:11px;color:var(--muted);margin-top:5px;font-weight:400}.scenario-arrow{color:var(--teal);opacity:0}.scenario-button[aria-pressed=true] .scenario-arrow{opacity:1}.sidebar-foot{margin-top:23px;padding:18px 13px 0;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}.walkthrough-label{display:flex;align-items:flex-start;gap:9px;cursor:pointer;color:var(--white);line-height:1.5}.walkthrough-label input{accent-color:var(--teal);margin:3px 0 0}.sidebar-foot p{margin-top:9px}.recording{min-width:0}.frame-card{background:var(--paper);color:var(--ink);border-radius:8px;overflow:hidden;box-shadow:0 20px 45px #02070d26}.card-heading{padding:28px 30px 21px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px}.card-heading .eyebrow{color:#64726d;margin-bottom:10px}.card-heading h2{font-size:27px;font-weight:600}.card-heading p{font-size:13px;color:#65706d;max-width:550px;margin-top:10px}.frame-position{font:12px var(--mono);color:#65706d;white-space:nowrap;padding-top:2px}.frame-body{padding:0 30px 26px}.frame-meta{display:flex;gap:16px;align-items:center;padding:16px 0;font:10px var(--mono);color:#5f6d66;border-top:1px solid var(--paper-line)}.frame-meta span+span{padding-left:16px;border-left:1px solid #c5cdc7}.payload-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px}.byte-cell{min-width:0;background:#e7ebe5;border:1px solid #d9dfd8;border-radius:4px;padding:12px 4px 10px;text-align:center}.byte-cell.seq,.byte-cell.crc{background:#dcebe4;border-color:#c5dcd1}.byte-cell.fault-byte{background:#f8e4d5;border-color:#e8b994}.byte-index{font:9px var(--mono);color:#697970}.byte-value{font:clamp(20px,2.5vw,29px)/1.3 var(--mono);font-weight:600;letter-spacing:-.06em;margin:6px 0}.byte-field{font-size:9px;line-height:1.3;color:#56655d}.wire-caption{display:flex;justify-content:space-between;gap:15px;color:#68776e;font-size:10px;margin-top:10px}.decision{display:flex;align-items:center;gap:12px;border-top:1px solid var(--paper-line);margin-top:22px;padding-top:21px}.decision-icon{width:35px;height:35px;display:grid;place-items:center;background:#dcebe4;color:var(--teal-dark);border-radius:50%;font-size:17px;flex:0 0 auto}.decision.rejected .decision-icon{background:#f7e3d7;color:var(--orange-dark)}.decision-copy{flex:1;min-width:0}.decision-name{font-size:15px;font-weight:650;letter-spacing:-.02em}.decision-reason{font-size:12px;color:#64716a;margin-top:2px}.status-tag{font:10px var(--mono);border:1px solid #c0d3c5;border-radius:4px;color:var(--teal-dark);padding:5px 9px;white-space:nowrap}.rejected .status-tag{color:var(--orange-dark);border-color:#e4bda3}.uart{margin-top:17px;background:#162432;border-radius:5px;padding:15px 17px;color:var(--white);display:flex;align-items:center;gap:18px;min-height:58px}.uart-label{font:9px var(--mono);color:var(--teal);letter-spacing:.08em;white-space:nowrap}.uart code{font:12px/1.6 var(--mono);overflow-wrap:anywhere;min-width:0}.uart.suppressed{background:#e9e9e2;color:#71796e;border:1px dashed #c7cabe}.uart.suppressed .uart-label{color:#77796b}.uart.suppressed code{font:12px/1.6 var(--sans)}.player{padding:20px 30px;border-top:1px solid var(--paper-line);background:#edeee7}.timeline{display:flex;gap:7px;align-items:center}.timeline-button{height:38px;border:1px solid #cbd3c9;color:#607067;background:#f5f6f0;border-radius:4px;flex:1;position:relative;font:11px var(--mono)}.timeline-button::after{content:"";height:3px;position:absolute;bottom:0;left:0;right:0;background:#75ae97;border-radius:0 0 3px 3px}.timeline-button.rejected::after{background:#dc8651}.timeline-button[aria-current=true]{background:#203a3d;border-color:#203a3d;color:white}.timeline-button:hover{border-color:#446c5f}.timeline-button[aria-current=true]::after{background:var(--teal)}.timeline-legend{display:flex;gap:13px;font-size:10px;color:#657568;margin:9px 0 17px}.legend-item{display:inline-flex;gap:5px;align-items:center}.legend-line{width:9px;height:3px;background:#75ae97}.legend-line.orange{background:#dc8651}.play-controls{display:flex;align-items:center;gap:7px}.control{background:transparent;color:var(--ink);border:1px solid #cbd2c6;border-radius:4px;min-height:35px;padding:7px 11px;display:inline-flex;justify-content:center;align-items:center;gap:6px;font-size:11px;font-weight:600}.control:hover:not(:disabled){background:#dde4d9}.control.primary{background:var(--ink);color:var(--white);border-color:var(--ink);min-width:90px}.control.primary:hover:not(:disabled){background:#2c4656}.control svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.control .play-glyph{font-size:11px}.keyboard-hint{margin-left:auto;font:9px var(--mono);color:#6c786e;text-align:right}.counter-bar{display:grid;grid-template-columns:repeat(6,1fr);margin-top:17px;border:1px solid var(--line);border-radius:6px;padding:16px 0}.counter{padding:0 15px;border-left:1px solid var(--line)}.counter:first-child{border-left:0}.counter-value{font:22px/1.3 var(--mono);color:var(--white)}.counter-value.nonzero-error{color:var(--orange)}.counter-value.accepted-count{color:var(--teal)}.counter-label{font:9px var(--mono);color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.04em}.totals-caption{font-size:10px;color:var(--muted);margin-top:8px}.scenario-notes{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin:25px 0 9px}.notes-title{font:10px var(--mono);color:var(--teal);letter-spacing:.08em;text-transform:uppercase;margin-bottom:9px}.scenario-notes p{font-size:13px;color:#c1cbd5;line-height:1.7}.scenario-events{margin-top:14px;background:#20302e;border-left:2px solid var(--teal);padding:11px 14px;font:11px/1.7 var(--mono);color:#beead9;white-space:pre-wrap;overflow-wrap:anywhere}.scenario-events[hidden]{display:none}.section{margin-top:45px;padding-top:33px;border-top:1px solid var(--line)}.section-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:24px}.section-heading h2{font-size:24px;font-weight:600}.section-heading p{font-size:13px;color:var(--muted);max-width:690px;margin-top:10px}.section-heading .eyebrow{color:var(--orange);margin-bottom:10px}.small-badge{font:9px var(--mono);border:1px solid var(--line);padding:7px 10px;border-radius:4px;white-space:nowrap;color:var(--muted)}.backlog-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:24px}.backlog-panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:23px}.backlog-panel h3{font-size:17px;font-weight:600}.backlog-panel p{font-size:12px;color:var(--muted);margin-top:11px;line-height:1.7}.queue-labels{display:flex;justify-content:space-between;gap:15px;font:10px var(--mono);color:var(--muted);margin:21px 0 9px}.queue-blocks{display:grid;grid-template-columns:repeat(16,1fr);gap:4px}.queue-blocks i{height:27px;border-radius:3px;background:#295b52;border:1px solid #367c6b}.queue-blocks i:last-child{background:var(--teal);border-color:var(--teal)}.backlog-result{display:flex;align-items:center;gap:10px;margin-top:17px;font:12px var(--mono);color:var(--teal)}.backlog-steps{display:grid;gap:18px}.backlog-step{display:grid;grid-template-columns:24px 1fr;gap:11px}.step-number{color:var(--orange);font:12px var(--mono);padding-top:3px}.backlog-step h3{font-size:13px;font-weight:600;letter-spacing:0;line-height:1.5}.backlog-step p{font-size:12px;color:var(--muted);margin-top:4px}.code-inline{font:11px var(--mono);color:#c9d6dc}.evidence-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.disclosure{border:1px solid var(--line);border-radius:6px;background:#101d2a;min-width:0}.disclosure summary{cursor:pointer;padding:18px 20px;font-size:13px;font-weight:600;list-style:none;display:flex;align-items:center;gap:10px}.disclosure summary::-webkit-details-marker{display:none}.disclosure summary::before{content:"+";font:16px var(--mono);color:var(--teal);width:12px}.disclosure[open] summary::before{content:"−"}.summary-meta{margin-left:auto;color:var(--muted);font:10px var(--mono);font-weight:400;text-align:right}.disclosure-body{padding:0 20px 20px;min-width:0}.disclosure-body p{font-size:12px;color:var(--muted);margin-bottom:12px}.command{display:block;font:11px/1.7 var(--mono);color:var(--orange);white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:12px}.log{background:#0a1420;border:1px solid #263447;border-radius:4px;padding:14px;font:10px/1.8 var(--mono);color:#c3d6d1;white-space:pre;overflow:auto;max-height:360px;margin:0}.test-list{list-style:none;padding:0;margin:0 0 17px;display:grid;gap:6px}.test-list li{display:flex;align-items:flex-start;gap:10px;color:#cad3dc;font-size:11px;line-height:1.5}.test-status{color:var(--teal);font:10px/1.6 var(--mono)}.evidence-action{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-top:18px}.evidence-action p{font-size:11px;color:var(--muted);max-width:720px}.dark-button{border:1px solid #466056;background:#1b332f;color:#c3f3df;border-radius:5px;padding:10px 14px;white-space:nowrap;font-size:11px;font-weight:600}.dark-button:hover{background:#25453d}.presenter{margin:26px 0 0}.presenter-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:23px}.presenter-step .eyebrow{color:var(--orange);margin-bottom:9px}.presenter-step h3{font-size:14px;font-weight:600;margin-bottom:9px}.presenter-step p{font-size:12px;color:var(--muted);line-height:1.7;margin:0}.footnote{margin-top:20px!important;padding-top:16px;border-top:1px solid var(--line)}.footer{display:flex;justify-content:space-between;gap:20px;padding-top:28px;padding-bottom:36px;color:#7f91a5;font:10px/1.7 var(--mono)}.footer span:last-child{text-align:right}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.error{padding:20px;border:1px solid #bb845e;background:#3e2c20;color:#ffe1c5;border-radius:6px;margin-bottom:20px}.error[hidden]{display:none}noscript{display:block;background:#3e2c20;padding:20px;color:#ffe1c5}.missing-payload .byte-value{color:#8d958c}.missing-payload .byte-cell{background:#e9e9e2;border-style:dashed}.disabled-demo .workspace{opacity:.45;pointer-events:none}
+    @media(min-width:1450px){.wrap{padding-left:36px;padding-right:36px}.hero{padding-top:54px}.workspace{grid-template-columns:250px minmax(0,1fr);gap:32px}}
+    @media(min-width:1100px){.header-inner{min-height:76px}.hero{padding:24px 0 20px}.hero h1{font-size:40px;max-width:800px}.hero h1 br{display:none}.hero .eyebrow{margin-bottom:10px}.hero p{margin-top:11px}.boundary{padding-top:10px;padding-bottom:10px;margin-bottom:20px}.card-heading{padding-top:23px;padding-bottom:18px}.frame-body{padding-bottom:22px}.frame-meta{padding-top:13px;padding-bottom:13px}.decision{margin-top:18px;padding-top:18px}.uart{margin-top:14px}.player{padding-top:15px;padding-bottom:15px}}
+    @media(max-width:1050px){.wrap{padding:0 28px}.hero-meta{gap:20px}.hero-number{font-size:28px}.workspace{grid-template-columns:205px minmax(0,1fr);gap:18px}.card-heading{padding:24px 23px 19px}.card-heading h2{font-size:24px}.frame-body{padding:0 23px 23px}.player{padding:18px 23px}.keyboard-hint{display:none}.counter{padding:0 10px}.counter-label{font-size:8px}.byte-field{font-size:8px}.scenario-button{padding:13px 9px;gap:8px}.backlog-grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:800px){.hero{padding-top:32px;gap:20px}.hero-meta{display:none}.header-inner{min-height:78px}.brand-title span{display:block;font-size:11px;margin-top:2px}.brand-title .slash{display:none}.pill{font-size:9px;padding:8px 10px}.boundary{align-items:flex-start}.boundary .eyebrow{padding-top:3px}.workspace{grid-template-columns:1fr}.sidebar-label{margin-bottom:10px}.scenario-list{grid-template-columns:repeat(3,1fr);gap:6px}.scenario-button{border-color:var(--line);padding:12px 10px;grid-template-columns:21px 1fr}.scenario-arrow{display:none}.scenario-name{font-size:12px}.scenario-hint{font-size:10px}.sidebar-foot{margin-top:12px;padding:0;border:0;display:flex;align-items:center;justify-content:space-between;gap:15px}.sidebar-foot p{margin:0;font-size:10px}.recording{margin-top:5px}.backlog-grid{grid-template-columns:1fr}.backlog-steps{grid-template-columns:1fr 1fr}.evidence-grid{grid-template-columns:1fr}.presenter-grid{grid-template-columns:1fr;gap:21px}.presenter-step{display:grid;grid-template-columns:90px 1fr;column-gap:15px}.presenter-step .eyebrow{grid-row:span 2;padding-top:3px}.presenter-step h3{margin-bottom:7px}.byte-field{font-size:9px}.evidence-action{align-items:flex-start}.footer{font-size:9px}.section{margin-top:35px;padding-top:27px}}
+    @media(max-width:520px){.wrap{padding:0 17px}.header-inner{gap:12px}.brand{gap:10px}.mark{width:29px;height:29px}.brand-title{font-size:14px}.brand-title span{font-size:10px}.pill{font-size:8px;gap:5px;padding:7px 8px}.pill .dot{width:4px;height:4px}.hero{padding:28px 0 23px}.hero h1{font-size:31px}.hero p{font-size:13px;line-height:1.7}.hero .eyebrow{font-size:9px;margin-bottom:11px}.boundary{display:block;padding:11px 13px;font-size:10px;line-height:1.7;margin-bottom:21px}.boundary .eyebrow{display:block;font-size:9px;margin-bottom:5px}.scenario-button{gap:5px;padding:11px 8px;grid-template-columns:17px 1fr}.scenario-n{font-size:9px}.scenario-name{font-size:10px;line-height:1.4}.scenario-hint{font-size:8px;line-height:1.5}.sidebar-foot{display:block}.sidebar-foot p{margin:5px 0 0 22px}.walkthrough-label{font-size:10px}.card-heading{padding:21px 17px 18px;gap:10px}.card-heading h2{font-size:23px}.card-heading p{font-size:12px}.card-heading .eyebrow{font-size:9px}.frame-position{font-size:10px}.frame-body{padding:0 17px 20px}.frame-meta{font-size:8px;gap:9px;padding:13px 0}.frame-meta span+span{padding-left:9px}.payload-grid{gap:3px}.byte-cell{padding:8px 1px 7px}.byte-index{font-size:7px}.byte-value{font-size:22px}.byte-field{font-size:7px;letter-spacing:-.02em}.wire-caption{font-size:8px;gap:9px}.decision{gap:9px;margin-top:19px;padding-top:17px}.decision-icon{height:30px;width:30px;font-size:14px}.decision-name{font-size:13px}.decision-reason{font-size:10px}.status-tag{font-size:8px;padding:5px 6px}.uart{gap:10px;padding:13px 11px;align-items:flex-start}.uart-label{font-size:8px;padding-top:3px}.uart code{font-size:10px}.uart.suppressed code{font-size:10px}.player{padding:17px}.timeline{gap:5px}.timeline-button{height:34px;font-size:10px}.control{font-size:10px;padding:7px 9px}.control.primary{min-width:76px}.play-controls{gap:5px}.counter-bar{padding:12px 0;margin-top:13px;grid-template-columns:repeat(3,1fr);row-gap:14px}.counter:nth-child(4){border-left:0}.counter{padding:0 15px}.counter-value{font-size:21px}.counter-label{font-size:8px}.totals-caption{font-size:9px}.scenario-notes{gap:18px;margin-top:20px;grid-template-columns:1fr}.notes-title{font-size:9px;margin-bottom:6px}.scenario-notes p{font-size:12px}.section-heading{gap:12px;flex-direction:column}.section-heading h2{font-size:23px}.section-heading p{font-size:12px}.section-heading .eyebrow{font-size:9px}.backlog-panel{padding:19px}.backlog-panel h3{font-size:16px}.queue-blocks{gap:3px}.queue-blocks i{height:22px}.queue-labels{font-size:9px}.backlog-steps{grid-template-columns:1fr;gap:17px}.backlog-result{font-size:11px}.disclosure summary{padding:16px;font-size:12px;gap:8px}.summary-meta{font-size:9px}.disclosure-body{padding:0 16px 16px}.evidence-action{display:block}.evidence-action p{font-size:10px}.dark-button{margin-top:13px;width:100%;font-size:11px}.presenter-step{grid-template-columns:65px 1fr;gap:8px}.presenter-step h3{font-size:13px}.presenter-step p{font-size:11px}.presenter-step .eyebrow{font-size:9px}.footer{padding-top:24px;padding-bottom:27px;display:block}.footer span{display:block}.footer span:last-child{text-align:left;margin-top:8px}.log{font-size:9px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+    @media print{body{background:white;color:black}.wrap{max-width:none;padding:0}.site-header,.hero,.boundary,.frame-card,.section{break-inside:avoid}.sidebar,.play-controls,.timeline,.keyboard-hint,.dark-button{display:none}.workspace{display:block}.frame-card{box-shadow:none;border:1px solid #bbb}.counter-bar,.disclosure,.backlog-panel{background:white;color:black}.hero p,.scenario-notes p,.section-heading p,.backlog-panel p,.backlog-step p,.evidence-action p,.presenter-step p,.footer{color:#444}.pill{color:#27594c}.hero{padding:20px 0}.hero h1{font-size:28px}.section{margin-top:20px;padding-top:20px}.backlog-grid,.evidence-grid{grid-template-columns:1fr}.footer{padding-bottom:0}.disclosure:not([open]){display:none}}
+    @media screen and (min-width:1100px){.player{display:flex;flex-direction:column}.play-controls{order:-1;margin-bottom:12px}.timeline-legend{margin-bottom:0}}
+  </style>
+</head>
+<body>
+  <a class="skip" href="#frame-viewer">Skip to frame inspection</a>
+  <header class="site-header"><div class="wrap header-inner">
+    <div class="brand"><div class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="brand-title">CAN Telemetry <span><span class="slash">/ </span>Engineering walkthrough</span></div></div>
+    <div class="pill"><span class="dot" aria-hidden="true"></span>Recorded host execution</div>
+  </div></header>
+  <main class="wrap" id="main-content">
+    <section class="hero" aria-labelledby="page-title"><div><div class="eyebrow">Rohit Patel · Embedded systems portfolio</div><h1 id="page-title">Follow the frame.<br> Explain the decision.</h1><p>Inspect an eight-byte CAN payload, diagnose an injected fault, and trace recovery through the actual C receiver’s recorded output.</p></div><div class="hero-meta" aria-label="Captured evidence overview"><div><div class="hero-number" id="scenario-count">—</div><small>fault &amp; baseline scenarios</small></div><div><div class="hero-number" id="test-count">— <span>cases</span></div><small>protocol + HAL mock tests</small></div></div></section>
+    <div class="boundary"><span class="eyebrow">Evidence boundary</span><span><strong>Captured C/C++ host execution and HAL mocks.</strong> This offline viewer does not run firmware or connect to CAN/UART hardware. Physical validation remains pending.</span></div>
+    <noscript>This walkthrough needs JavaScript to display the embedded capture. No network connection or installed package is needed to view the generated HTML.</noscript>
+    <div class="error" id="data-error" role="alert" hidden></div>
+    <div class="workspace">
+      <aside aria-label="Select a scenario"><div class="sidebar-label eyebrow"><span>01 — Inspect a scenario</span></div><nav class="scenario-list" id="scenario-list" aria-label="Captured scenarios"></nav><div class="sidebar-foot"><label class="walkthrough-label"><input type="checkbox" id="walkthrough">Continue through all scenarios</label><p>Next or Play advances to the next scenario when enabled.</p></div></aside>
+      <div class="recording">
+        <section class="frame-card" id="frame-viewer" tabindex="0" aria-label="Recorded frame viewer. Left and right arrows change frame; space plays or pauses.">
+          <div class="card-heading"><div><div class="eyebrow" id="scene-kicker">Captured scenario</div><h2 id="scene-title">Loading recorded evidence</h2><p id="scene-description">The generated file contains the original simulator output.</p></div><div class="frame-position" id="frame-position">— / —</div></div>
+          <div class="frame-body"><div class="frame-meta"><span>STANDARD ID <strong>0x321</strong></span><span>CLASSIC CAN</span><span id="dlc-label">8-BYTE PAYLOAD</span></div><div class="payload-grid" id="payload-grid" aria-label="Payload bytes"></div><div class="wire-caption"><span id="payload-caption">Captured payload · hexadecimal · little-endian fields</span><span>CRC-8 / SAE-J1850</span></div>
+            <div class="decision" id="decision"><span class="decision-icon" id="decision-icon" aria-hidden="true">✓</span><div class="decision-copy"><div class="decision-name" id="decision-name">Recorded receiver decision</div><div class="decision-reason" id="decision-reason">Select a frame to inspect its status.</div></div><span class="status-tag" id="status-tag">—</span></div>
+            <div class="uart" id="uart"><span class="uart-label">UART OUTPUT</span><code id="uart-output">—</code></div>
+          </div>
+          <div class="player"><div class="timeline" id="timeline" aria-label="Choose a recorded frame"></div><div class="timeline-legend"><span class="legend-item"><i class="legend-line" aria-hidden="true"></i>Accepted</span><span class="legend-item"><i class="legend-line orange" aria-hidden="true"></i>Rejected / not delivered</span></div><div class="play-controls">
+            <button class="control" id="previous" type="button" aria-label="Previous frame" title="Previous frame"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m10 3-5 5 5 5"/></svg>Prev</button>
+            <button class="control primary" id="play" type="button" aria-label="Play recorded frames"><span class="play-glyph" id="play-glyph" aria-hidden="true">▶</span><span id="play-label">Play</span></button>
+            <button class="control" id="next" type="button" aria-label="Next frame" title="Next frame">Next<svg viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5"/></svg></button>
+            <button class="control" id="reset" type="button" title="Reset playback"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6a5 5 0 1 1 0 4M3 2v4h4"/></svg>Reset</button><span class="keyboard-hint">FOCUS VIEWER<br>← → frames · Space play</span>
+          </div></div>
+        </section>
+        <div class="counter-bar" id="counter-bar" aria-label="Complete scenario totals"></div><p class="totals-caption">Scenario totals · from the captured SUMMARY line, across the complete run; these are not live counters.</p>
+        <div class="scenario-notes"><div><div class="notes-title">Test objective</div><p id="test-objective"></p></div><div><div class="notes-title">What to explain</div><p id="explain-note"></p></div></div><div class="scenario-events" id="scenario-events" hidden></div>
+      </div>
+    </div>
+    <section class="section" aria-labelledby="backlog-title"><div class="section-heading"><div><div class="eyebrow">02 — Reliability under backlog</div><h2 id="backlog-title">The queue changes what “now” means.</h2><p>A bounded poll must preserve receive-time order. Checking the wall clock before processing pending frames can report an outage that never happened.</p></div><span class="small-badge">EXPLANATORY TEST INPUTS</span></div>
+      <div class="backlog-grid"><div class="backlog-panel"><h3>16 frames remain. No false timeout.</h3><p>The first batch arrives at <span class="code-inline">0 ms</span>. While it is processed, mocks enqueue another batch at <span class="code-inline">3, 6, …, 48 ms</span>. Each gap is below the <span class="code-inline">32 ms</span> limit.</p><div class="queue-labels"><span>Pending after poll 1</span><span>16 / 16 slots</span></div><div class="queue-blocks" aria-label="16 occupied queue slots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="backlog-result"><span aria-hidden="true">✓</span>Defer wall-clock check. Keep arrival order.</div><p>Poll 2 processes those timestamps without a timeout. These are controlled mock inputs, not measured hardware timings.</p></div><div class="backlog-steps"><div class="backlog-step"><span class="step-number">01</span><div><h3>Bound the work in main context</h3><p>Drain at most 16 frames. Validation and blocking UART stay outside the CAN interrupt callback.</p></div></div><div class="backlog-step"><span class="step-number">02</span><div><h3>Take an atomic empty-queue snapshot</h3><p>Only use the current tick for timeout checking once the queue is empty. Preserve the caller’s interrupt mask.</p></div></div><div class="backlog-step"><span class="step-number">03</span><div><h3>Still detect a real gap</h3><p>When the next queued arrival is at <span class="code-inline">40 ms</span>, the next poll reports the real gap beyond 32 ms and then accepts recovery traffic.</p></div></div><div class="backlog-step"><span class="step-number">04</span><div><h3>Prove behavior, name the limit</h3><p>Captured HAL tests below cover backlog, rollover, overflow, and recovery. CPU scheduling and physical CAN/UART behavior require board evidence.</p></div></div></div></div>
+    </section>
+    <section class="section" aria-labelledby="evidence-title"><div class="section-heading"><div><div class="eyebrow">03 — Inspect the evidence</div><h2 id="evidence-title">Every result has a source.</h2><p>Open the original output and test cases. The viewer presents captured decisions; it does not reimplement the protocol in JavaScript.</p></div><span class="small-badge" id="capture-date">EMBEDDED CAPTURE</span></div>
+      <div class="evidence-grid"><details class="disclosure"><summary>Selected scenario log<span class="summary-meta" id="scenario-log-meta">—</span></summary><div class="disclosure-body"><p>The complete output for the selected scenario, including events, UART rows, and final counters.</p><code class="command" id="scenario-command"></code><pre class="log" id="scenario-log" tabindex="0" aria-label="Captured simulator output"></pre></div></details><details class="disclosure"><summary>Capture provenance<span class="summary-meta">revision + hashes</span></summary><div class="disclosure-body"><p>The revision identifies the capture’s Git baseline. A dirty flag means working-tree changes were present. Hashes identify source and binary files present at capture; they do not prove that the binaries were built from those sources.</p><pre class="log" id="provenance" tabindex="0" aria-label="Capture provenance"></pre></div></details></div>
+      <div class="evidence-grid" id="test-suites" style="margin-top:16px"></div>
+      <div class="evidence-action"><p>Acceptance here means host behavior passed the recorded checks. Full STM32Cube firmware compilation, analyzer traces, and physical UART measurements remain separate validation steps.</p><button class="dark-button" id="download" type="button">↓ Download evidence JSON</button></div>
+      <details class="disclosure presenter"><summary>Presenter notes<span class="summary-meta">a five-minute walkthrough</span></summary><div class="disclosure-body"><div class="presenter-grid"><div class="presenter-step"><div class="eyebrow">0:00–1:00</div><h3>Define the boundary</h3><p>“This is a project demonstration using recorded host execution. The portable C11 core validates an eight-byte Classic CAN payload, while the STM32 adapter queues arrivals and forwards accepted samples to UART.” Start with nominal traffic and point to the bytes, status, and exact UART row.</p></div><div class="presenter-step"><div class="eyebrow">1:00–2:00</div><h3>Diagnose the fault</h3><p>Choose CRC corruption, then semantic range. A bad CRC rejects accidental corruption. A recomputed CRC does not make an impossible engineering value valid. Explain the next sequence rejection after the lost accepted sample, then show recovery.</p></div><div class="presenter-step"><div class="eyebrow">2:00–3:00</div><h3>Explain a reliability decision</h3><p>Show sequence discontinuity and timeout. A valid unexpected sequence becomes the new baseline but is not forwarded. Timeout measures time since acceptance; it is an event, not a blanket rejection of the next valid frame. Use the captured event log to show the elapsed interval.</p></div><div class="presenter-step"><div class="eyebrow">3:00–4:00</div><h3>Discuss the hard edge case</h3><p>Walk through the explanatory backlog example. Polling is bounded; queued timestamps must be evaluated before the current clock. Explain the atomic empty-queue snapshot, the real-gap regression, and tick rollover. Distinguish these controlled inputs from measured interrupt timing.</p></div><div class="presenter-step"><div class="eyebrow">4:00–5:00</div><h3>Close with evidence and next steps</h3><p>Open the HAL case list and raw log. Explain queue overflow and UART failure policy, then name remaining work: build with the actual Cube HAL, collect paired CAN/UART captures, and measure blocking UART before choosing DMA. Download the evidence for review.</p></div><div class="presenter-step"><div class="eyebrow">Follow-up</div><h3>Be precise about the claim</h3><p>“I can demonstrate the behavior in host tests and explain the design trade-offs. I have not established physical-layer performance, production suitability, or certification.” This walkthrough is project evidence, not a claim about an employer’s requirements.</p></div></div><p class="footnote">Use these notes as prompts for your own explanation. The playback interval is presentation pacing, not simulated or measured CAN timing.</p></div></details>
+    </section>
+    <footer class="footer"><span>ROHIT PATEL / CAN VEHICLE TELEMETRY<br>Portable C11 · C++ fault injection · STM32 HAL adapter</span><span>OFFLINE · SELF-CONTAINED · NO NETWORK REQUESTS<br id="footer-break"><span id="revision-note">Capture metadata loading</span></span></footer>
+    <div id="announcement" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+  </main>
+  <script type="application/json" id="demo-data">{
+  "schema_version": 1,
+  "generated_at": "2026-11-13T18:56:54Z",
+  "git_revision": "cbab992e21dae5d1ae285c5838a61f6ce6005c6b",
+  "working_tree_dirty": true,
+  "source_sha256": {
+    "CMakeLists.txt": "1ee1a47f05176c26b565aab4179d3fb0430d4972dfc76f8edafd7ac1de6dbe71",
+    "apps/simulator.cpp": "a1adddc40f5068393c9ff6e3aee2fcfa9a3e2d114c5d51108f3b12b60d10d752",
+    "demo/template.html": "f355fe772cd5595268f966577f5c16c2e379f91de801b4e9c367eeae36aa4367",
+    "include/telemetry/protocol.h": "37ae840d034a311b6813f4746ac946e2e96056194ba59e60af52b658a009b51b",
+    "include/telemetry/receiver.h": "72a1188aac9914d01e1b2db242b973b7c2621cf0e040c8dbb81719ec95fc0530",
+    "platform/stm32f446re/telemetry_stm32_hal.c": "425836f92fad62b20d407a35e25bb37feb2d66548e0b67d9dd000310bb3dd4ab",
+    "platform/stm32f446re/telemetry_stm32_hal.h": "c13a39f8090651d5663b3f94d88e6c8e5e9252cdc591fe6a26dddd638281353f",
+    "scripts/create_demo.py": "8f7900c152ffc87d46f0586b33774ab12a6ee73f8582350749a2a8deac3a98d7",
+    "src/protocol.c": "eee799dbdc005103fa005c2d62db10bb29507cd47ee82c7a798d02c004b2d86f",
+    "src/receiver.c": "8cc8607f5601824792c3d953c4a617f5e9e901c4ce95ff98c8458d3399f80406",
+    "tests/mocks/stm32f4xx_hal.h": "63ad7da6a9e186cbd30bf26d347d251f9b95918bf0c1a67dcd42ad51f5523f2b",
+    "tests/test_demo.py": "78960c52da66b66467a1d0cf39fc6bb3cfee2332fa73e016bbaf096b02f51f70",
+    "tests/test_stm32_hal.c": "e71f04f7f388ec6758214b84b93dc4c250deed8f6fc93c36fbdf18a43b05c496",
+    "tests/test_telemetry.c": "42e7423adc02f80f9f857006ca657c323fa30261d0c8415001e1345632bb0763"
+  },
+  "binary_sha256": {
+    "build-review/telemetry_sim.exe": "6cbdde6c1346b2d892f0e4186bd56709880a3c87acb588bb31c45273328eb724",
+    "build-review/telemetry_tests.exe": "3b4d6ef6c43c86a988a1b6dd2cb252e8bf04ec9f3a8f3ac091393b4ff1adb278",
+    "build-review/telemetry_hal_tests.exe": "a3e0ddd0c0f0709d900e00e9f162921337a36e412ac9ce8cde557118163928ba"
+  },
+  "scenarios": [
+    {
+      "id": "none",
+      "title": "Nominal telemetry",
+      "command": [
+        "build-review/telemetry_sim.exe",
+        "--frames",
+        "6",
+        "--fault",
+        "none",
+        "--fault-at",
+        "2"
+      ],
+      "exit_code": 0,
+      "summary": {
+        "accepted": 6,
+        "crc": 0,
+        "range": 0,
+        "sequence": 0,
+        "timeout": 0,
+        "can": 0
+      },
+      "frames": [
+        {
+          "index": 0,
+          "payload": [
+            "00",
+            "68",
+            "10",
+            "7A",
+            "E8",
+            "35",
+            "03",
+            "CD"
+          ],
+          "status": "ok",
+          "uart": "TEL,0,42.00,82,13800,3"
+        },
+        {
+          "index": 1,
+          "payload": [
+            "01",
+            "8D",
+            "10",
+            "7B",
+            "ED",
+            "35",
+            "03",
+            "1F"
+          ],
+          "status": "ok",
+          "uart": "TEL,1,42.37,83,13805,3"
+        },
+        {
+          "index": 2,
+          "payload": [
+            "02",
+            "B2",
+            "10",
+            "7C",
+            "F2",
+            "35",
+            "03",
+            "6B"
+          ],
+          "status": "ok",
+          "uart": "TEL,2,42.74,84,13810,3"
+        },
+        {
+          "index": 3,
+          "payload": [
+            "03",
+            "D7",
+            "10",
+            "7D",
+            "F7",
+            "35",
+            "03",
+            "19"
+          ],
+          "status": "ok",
+          "uart": "TEL,3,43.11,85,13815,3"
+        },
+        {
+          "index": 4,
+          "payload": [
+            "04",
+            "FC",
+            "10",
+            "7E",
+            "FC",
+            "35",
+            "03",
+            "45"
+          ],
+          "status": "ok",
+          "uart": "TEL,4,43.48,86,13820,3"
+        },
+        {
+          "index": 5,
+          "payload": [
+            "05",
+            "21",
+            "11",
+            "7F",
+            "01",
+            "36",
+            "03",
+            "9B"
+          ],
+          "status": "ok",
+          "uart": "TEL,5,43.85,87,13825,3"
+        }
+      ],
+      "events": [],
+      "stdout": "CAN telemetry simulation: id=0x321 bitrate=500000 frame_bytes=8\nRX[0] 00 68 10 7A E8 35 03 CD -\u003e ok\nUART\u003e TEL,0,42.00,82,13800,3\n\nRX[1] 01 8D 10 7B ED 35 03 1F -\u003e ok\nUART\u003e TEL,1,42.37,83,13805,3\n\nRX[2] 02 B2 10 7C F2 35 03 6B -\u003e ok\nUART\u003e TEL,2,42.74,84,13810,3\n\nRX[3] 03 D7 10 7D F7 35 03 19 -\u003e ok\nUART\u003e TEL,3,43.11,85,13815,3\n\nRX[4] 04 FC 10 7E FC 35 03 45 -\u003e ok\nUART\u003e TEL,4,43.48,86,13820,3\n\nRX[5] 05 21 11 7F 01 36 03 9B -\u003e ok\nUART\u003e TEL,5,43.85,87,13825,3\n\nSUMMARY accepted=6 crc=0 range=0 sequence=0 timeout=0 can=0\n"
+    },
+    {
+      "id": "crc",
+      "title": "Corruption detection",
+      "command": [
+        "build-review/telemetry_sim.exe",
+        "--frames",
+        "6",
+        "--fault",
+        "crc",
+        "--fault-at",
+        "2"
+      ],
+      "exit_code": 0,
+      "summary": {
+        "accepted": 4,
+        "crc": 1,
+        "range": 0,
+        "sequence": 1,
+        "timeout": 0,
+        "can": 0
+      },
+      "frames": [
+        {
+          "index": 0,
+          "payload": [
+            "00",
+            "68",
+            "10",
+            "7A",
+            "E8",
+            "35",
+            "03",
+            "CD"
+          ],
+          "status": "ok",
+          "uart": "TEL,0,42.00,82,13800,3"
+        },
+        {
+          "index": 1,
+          "payload": [
+            "01",
+            "8D",
+            "10",
+            "7B",
+            "ED",
+            "35",
+            "03",
+            "1F"
+          ],
+          "status": "ok",
+          "uart": "TEL,1,42.37,83,13805,3"
+        },
+        {
+          "index": 2,
+          "payload": [
+            "02",
+            "B3",
+            "10",
+            "7C",
+            "F2",
+            "35",
+            "03",
+            "6B"
+          ],
+          "status": "crc mismatch",
+          "uart": null
+        },
+        {
+          "index": 3,
+          "payload": [
+            "03",
+            "D7",
+            "10",
+            "7D",
+            "F7",
+            "35",
+            "03",
+            "19"
+          ],
+          "status": "sequence mismatch",
+          "uart": null
+        },
+        {
+          "index": 4,
+          "payload": [
+            "04",
+            "FC",
+            "10",
+            "7E",
+            "FC",
+            "35",
+            "03",
+            "45"
+          ],
+          "status": "ok",
+          "uart": "TEL,4,43.48,86,13820,3"
+        },
+        {
+          "index": 5,
+          "payload": [
+            "05",
+            "21",
+            "11",
+            "7F",
+            "01",
+            "36",
+            "03",
+            "9B"
+          ],
+          "status": "ok",
+          "uart": "TEL,5,43.85,87,13825,3"
+        }
+      ],
+      "events": [],
+      "stdout": "CAN telemetry simulation: id=0x321 bitrate=500000 frame_bytes=8\nRX[0] 00 68 10 7A E8 35 03 CD -\u003e ok\nUART\u003e TEL,0,42.00,82,13800,3\n\nRX[1] 01 8D 10 7B ED 35 03 1F -\u003e ok\nUART\u003e TEL,1,42.37,83,13805,3\n\nRX[2] 02 B3 10 7C F2 35 03 6B -\u003e crc mismatch\nRX[3] 03 D7 10 7D F7 35 03 19 -\u003e sequence mismatch\nRX[4] 04 FC 10 7E FC 35 03 45 -\u003e ok\nUART\u003e TEL,4,43.48,86,13820,3\n\nRX[5] 05 21 11 7F 01 36 03 9B -\u003e ok\nUART\u003e TEL,5,43.85,87,13825,3\n\nSUMMARY accepted=4 crc=1 range=0 sequence=1 timeout=0 can=0\n"
+    },
+    {
+      "id": "range",
+      "title": "Semantic range rejection",
+      "command": [
+        "build-review/telemetry_sim.exe",
+        "--frames",
+        "6",
+        "--fault",
+        "range",
+        "--fault-at",
+        "2"
+      ],
+      "exit_code": 0,
+      "summary": {
+        "accepted": 4,
+        "crc": 0,
+        "range": 1,
+        "sequence": 1,
+        "timeout": 0,
+        "can": 0
+      },
+      "frames": [
+        {
+          "index": 0,
+          "payload": [
+            "00",
+            "68",
+            "10",
+            "7A",
+            "E8",
+            "35",
+            "03",
+            "CD"
+          ],
+          "status": "ok",
+          "uart": "TEL,0,42.00,82,13800,3"
+        },
+        {
+          "index": 1,
+          "payload": [
+            "01",
+            "8D",
+            "10",
+            "7B",
+            "ED",
+            "35",
+            "03",
+            "1F"
+          ],
+          "status": "ok",
+          "uart": "TEL,1,42.37,83,13805,3"
+        },
+        {
+          "index": 2,
+          "payload": [
+            "02",
+            "FF",
+            "FF",
+            "7C",
+            "F2",
+            "35",
+            "03",
+            "73"
+          ],
+          "status": "value out of range",
+          "uart": null
+        },
+        {
+          "index": 3,
+          "payload": [
+            "03",
+            "D7",
+            "10",
+            "7D",
+            "F7",
+            "35",
+            "03",
+            "19"
+          ],
+          "status": "sequence mismatch",
+          "uart": null
+        },
+        {
+          "index": 4,
+          "payload": [
+            "04",
+            "FC",
+            "10",
+            "7E",
+            "FC",
+            "35",
+            "03",
+            "45"
+          ],
+          "status": "ok",
+          "uart": "TEL,4,43.48,86,13820,3"
+        },
+        {
+          "index": 5,
+          "payload": [
+            "05",
+            "21",
+            "11",
+            "7F",
+            "01",
+            "36",
+            "03",
+            "9B"
+          ],
+          "status": "ok",
+          "uart": "TEL,5,43.85,87,13825,3"
+        }
+      ],
+      "events": [],
+      "stdout": "CAN telemetry simulation: id=0x321 bitrate=500000 frame_bytes=8\nRX[0] 00 68 10 7A E8 35 03 CD -\u003e ok\nUART\u003e TEL,0,42.00,82,13800,3\n\nRX[1] 01 8D 10 7B ED 35 03 1F -\u003e ok\nUART\u003e TEL,1,42.37,83,13805,3\n\nRX[2] 02 FF FF 7C F2 35 03 73 -\u003e value out of range\nRX[3] 03 D7 10 7D F7 35 03 19 -\u003e sequence mismatch\nRX[4] 04 FC 10 7E FC 35 03 45 -\u003e ok\nUART\u003e TEL,4,43.48,86,13820,3\n\nRX[5] 05 21 11 7F 01 36 03 9B -\u003e ok\nUART\u003e TEL,5,43.85,87,13825,3\n\nSUMMARY accepted=4 crc=0 range=1 sequence=1 timeout=0 can=0\n"
+    },
+    {
+      "id": "sequence",
+      "title": "Sequence discontinuity and recovery",
+      "command": [
+        "build-review/telemetry_sim.exe",
+        "--frames",
+        "6",
+        "--fault",
+        "sequence",
+        "--fault-at",
+        "2"
+      ],
+      "exit_code": 0,
+      "summary": {
+        "accepted": 5,
+        "crc": 0,
+        "range": 0,
+        "sequence": 1,
+        "timeout": 0,
+        "can": 0
+      },
+      "frames": [
+        {
+          "index": 0,
+          "payload": [
+            "00",
+            "68",
+            "10",
+            "7A",
+            "E8",
+            "35",
+            "03",
+            "CD"
+          ],
+          "status": "ok",
+          "uart": "TEL,0,42.00,82,13800,3"
+        },
+        {
+          "index": 1,
+          "payload": [
+            "01",
+            "8D",
+            "10",
+            "7B",
+            "ED",
+            "35",
+            "03",
+            "1F"
+          ],
+          "status": "ok",
+          "uart": "TEL,1,42.37,83,13805,3"
+        },
+        {
+          "index": 2,
+          "payload": [
+            "03",
+            "B2",
+            "10",
+            "7C",
+            "F2",
+            "35",
+            "03",
+            "36"
+          ],
+          "status": "sequence mismatch",
+          "uart": null
+        },
+        {
+          "index": 3,
+          "payload": [
+            "04",
+            "D7",
+            "10",
+            "7D",
+            "F7",
+            "35",
+            "03",
+            "97"
+          ],
+          "status": "ok",
+          "uart": "TEL,4,43.11,85,13815,3"
+        },
+        {
+          "index": 4,
+          "payload": [
+            "05",
+            "FC",
+            "10",
+            "7E",
+            "FC",
+            "35",
+            "03",
+            "18"
+          ],
+          "status": "ok",
+          "uart": "TEL,5,43.48,86,13820,3"
+        },
+        {
+          "index": 5,
+          "payload": [
+            "06",
+            "21",
+            "11",
+            "7F",
+            "01",
+            "36",
+            "03",
+            "7C"
+          ],
+          "status": "ok",
+          "uart": "TEL,6,43.85,87,13825,3"
+        }
+      ],
+      "events": [],
+      "stdout": "CAN telemetry simulation: id=0x321 bitrate=500000 frame_bytes=8\nRX[0] 00 68 10 7A E8 35 03 CD -\u003e ok\nUART\u003e TEL,0,42.00,82,13800,3\n\nRX[1] 01 8D 10 7B ED 35 03 1F -\u003e ok\nUART\u003e TEL,1,42.37,83,13805,3\n\nRX[2] 03 B2 10 7C F2 35 03 36 -\u003e sequence mismatch\nRX[3] 04 D7 10 7D F7 35 03 97 -\u003e ok\nUART\u003e TEL,4,43.11,85,13815,3\n\nRX[4] 05 FC 10 7E FC 35 03 18 -\u003e ok\nUART\u003e TEL,5,43.48,86,13820,3\n\nRX[5] 06 21 11 7F 01 36 03 7C -\u003e ok\nUART\u003e TEL,6,43.85,87,13825,3\n\nSUMMARY accepted=5 crc=0 range=0 sequence=1 timeout=0 can=0\n"
+    },
+    {
+      "id": "timeout",
+      "title": "Receive outage and recovery",
+      "command": [
+        "build-review/telemetry_sim.exe",
+        "--frames",
+        "6",
+        "--fault",
+        "timeout",
+        "--fault-at",
+        "2"
+      ],
+      "exit_code": 0,
+      "summary": {
+        "accepted": 6,
+        "crc": 0,
+        "range": 0,
+        "sequence": 0,
+        "timeout": 1,
+        "can": 0
+      },
+      "frames": [
+        {
+          "index": 0,
+          "payload": [
+            "00",
+            "68",
+            "10",
+            "7A",
+            "E8",
+            "35",
+            "03",
+            "CD"
+          ],
+          "status": "ok",
+          "uart": "TEL,0,42.00,82,13800,3"
+        },
+        {
+          "index": 1,
+          "payload": [
+            "01",
+            "8D",
+            "10",
+            "7B",
+            "ED",
+            "35",
+            "03",
+            "1F"
+          ],
+          "status": "ok",
+          "uart": "TEL,1,42.37,83,13805,3"
+        },
+        {
+          "index": 2,
+          "payload": [
+            "02",
+            "B2",
+            "10",
+            "7C",
+            "F2",
+            "35",
+            "03",
+            "6B"
+          ],
+          "status": "ok",
+          "uart": "TEL,2,42.74,84,13810,3"
+        },
+        {
+          "index": 3,
+          "payload": [
+            "03",
+            "D7",
+            "10",
+            "7D",
+            "F7",
+            "35",
+            "03",
+            "19"
+          ],
+          "status": "ok",
+          "uart": "TEL,3,43.11,85,13815,3"
+        },
+        {
+          "index": 4,
+          "payload": [
+            "04",
+            "FC",
+            "10",
+            "7E",
+            "FC",
+            "35",
+            "03",
+            "45"
+          ],
+          "status": "ok",
+          "uart": "TEL,4,43.48,86,13820,3"
+        },
+        {
+          "index": 5,
+          "payload": [
+            "05",
+            "21",
+            "11",
+            "7F",
+            "01",
+            "36",
+            "03",
+            "9B"
+          ],
+          "status": "ok",
+          "uart": "TEL,5,43.85,87,13825,3"
+        }
+      ],
+      "events": [
+        "EVENT timeout elapsed_ms=271"
+      ],
+      "stdout": "CAN telemetry simulation: id=0x321 bitrate=500000 frame_bytes=8\nRX[0] 00 68 10 7A E8 35 03 CD -\u003e ok\nUART\u003e TEL,0,42.00,82,13800,3\n\nRX[1] 01 8D 10 7B ED 35 03 1F -\u003e ok\nUART\u003e TEL,1,42.37,83,13805,3\n\nEVENT timeout elapsed_ms=271\nRX[2] 02 B2 10 7C F2 35 03 6B -\u003e ok\nUART\u003e TEL,2,42.74,84,13810,3\n\nRX[3] 03 D7 10 7D F7 35 03 19 -\u003e ok\nUART\u003e TEL,3,43.11,85,13815,3\n\nRX[4] 04 FC 10 7E FC 35 03 45 -\u003e ok\nUART\u003e TEL,4,43.48,86,13820,3\n\nRX[5] 05 21 11 7F 01 36 03 9B -\u003e ok\nUART\u003e TEL,5,43.85,87,13825,3\n\nSUMMARY accepted=6 crc=0 range=0 sequence=0 timeout=1 can=0\n"
+    },
+    {
+      "id": "can",
+      "title": "CAN controller error and recovery",
+      "command": [
+        "build-review/telemetry_sim.exe",
+        "--frames",
+        "6",
+        "--fault",
+        "can",
+        "--fault-at",
+        "2"
+      ],
+      "exit_code": 0,
+      "summary": {
+        "accepted": 4,
+        "crc": 0,
+        "range": 0,
+        "sequence": 1,
+        "timeout": 0,
+        "can": 1
+      },
+      "frames": [
+        {
+          "index": 0,
+          "payload": [
+            "00",
+            "68",
+            "10",
+            "7A",
+            "E8",
+            "35",
+            "03",
+            "CD"
+          ],
+          "status": "ok",
+          "uart": "TEL,0,42.00,82,13800,3"
+        },
+        {
+          "index": 1,
+          "payload": [
+            "01",
+            "8D",
+            "10",
+            "7B",
+            "ED",
+            "35",
+            "03",
+            "1F"
+          ],
+          "status": "ok",
+          "uart": "TEL,1,42.37,83,13805,3"
+        },
+        {
+          "index": 2,
+          "payload": [],
+          "status": "can controller error",
+          "uart": null
+        },
+        {
+          "index": 3,
+          "payload": [
+            "03",
+            "D7",
+            "10",
+            "7D",
+            "F7",
+            "35",
+            "03",
+            "19"
+          ],
+          "status": "sequence mismatch",
+          "uart": null
+        },
+        {
+          "index": 4,
+          "payload": [
+            "04",
+            "FC",
+            "10",
+            "7E",
+            "FC",
+            "35",
+            "03",
+            "45"
+          ],
+          "status": "ok",
+          "uart": "TEL,4,43.48,86,13820,3"
+        },
+        {
+          "index": 5,
+          "payload": [
+            "05",
+            "21",
+            "11",
+            "7F",
+            "01",
+            "36",
+            "03",
+            "9B"
+          ],
+          "status": "ok",
+          "uart": "TEL,5,43.85,87,13825,3"
+        }
+      ],
+      "events": [
+        "EVENT can controller error"
+      ],
+      "stdout": "CAN telemetry simulation: id=0x321 bitrate=500000 frame_bytes=8\nRX[0] 00 68 10 7A E8 35 03 CD -\u003e ok\nUART\u003e TEL,0,42.00,82,13800,3\n\nRX[1] 01 8D 10 7B ED 35 03 1F -\u003e ok\nUART\u003e TEL,1,42.37,83,13805,3\n\nEVENT can controller error\nRX[2] controller did not deliver a payload\nRX[3] 03 D7 10 7D F7 35 03 19 -\u003e sequence mismatch\nRX[4] 04 FC 10 7E FC 35 03 45 -\u003e ok\nUART\u003e TEL,4,43.48,86,13820,3\n\nRX[5] 05 21 11 7F 01 36 03 9B -\u003e ok\nUART\u003e TEL,5,43.85,87,13825,3\n\nSUMMARY accepted=4 crc=0 range=0 sequence=1 timeout=0 can=1\n"
+    }
+  ],
+  "suites": [
+    {
+      "id": "protocol",
+      "title": "C protocol host tests",
+      "command": [
+        "build-review/telemetry_tests.exe"
+      ],
+      "exit_code": 0,
+      "cases": [
+        {
+          "name": "crc standard check vector",
+          "status": "PASS"
+        },
+        {
+          "name": "round trip and byte order",
+          "status": "PASS"
+        },
+        {
+          "name": "boundary values",
+          "status": "PASS"
+        },
+        {
+          "name": "encoder rejects invalid input",
+          "status": "PASS"
+        },
+        {
+          "name": "decoder fault paths",
+          "status": "PASS"
+        },
+        {
+          "name": "receiver sequence wrap and recovery",
+          "status": "PASS"
+        },
+        {
+          "name": "receiver error counters",
+          "status": "PASS"
+        },
+        {
+          "name": "timeout transition and timer rollover",
+          "status": "PASS"
+        }
+      ],
+      "total": 8,
+      "stdout": "PASS crc standard check vector\nPASS round trip and byte order\nPASS boundary values\nPASS encoder rejects invalid input\nPASS decoder fault paths\nPASS receiver sequence wrap and recovery\nPASS receiver error counters\nPASS timeout transition and timer rollover\n8 tests, 0 failed assertions\n"
+    },
+    {
+      "id": "hal",
+      "title": "STM32 adapter with HAL/CMSIS mocks",
+      "command": [
+        "build-review/telemetry_hal_tests.exe"
+      ],
+      "exit_code": 0,
+      "cases": [
+        {
+          "name": "ISR deferral and IRQ mask",
+          "status": "PASS"
+        },
+        {
+          "name": "envelope and DLC rejection",
+          "status": "PASS"
+        },
+        {
+          "name": "accepted-only UART",
+          "status": "PASS"
+        },
+        {
+          "name": "queue overflow and recovery",
+          "status": "PASS"
+        },
+        {
+          "name": "bounded poll with refill",
+          "status": "PASS"
+        },
+        {
+          "name": "continuous backlog does not time out",
+          "status": "PASS"
+        },
+        {
+          "name": "real outage across bounded polls",
+          "status": "PASS"
+        },
+        {
+          "name": "backlog and tick rollover",
+          "status": "PASS"
+        },
+        {
+          "name": "deferred CAN errors",
+          "status": "PASS"
+        },
+        {
+          "name": "UART failure policy",
+          "status": "PASS"
+        },
+        {
+          "name": "queued outage and recovery",
+          "status": "PASS"
+        },
+        {
+          "name": "receive tick and rollover",
+          "status": "PASS"
+        },
+        {
+          "name": "optional UART and timeout",
+          "status": "PASS"
+        },
+        {
+          "name": "deferred counter saturation",
+          "status": "PASS"
+        },
+        {
+          "name": "null argument handling",
+          "status": "PASS"
+        }
+      ],
+      "total": 15,
+      "stdout": "PASS ISR deferral and IRQ mask\nPASS envelope and DLC rejection\nPASS accepted-only UART\nPASS queue overflow and recovery\nPASS bounded poll with refill\nPASS continuous backlog does not time out\nPASS real outage across bounded polls\nPASS backlog and tick rollover\nPASS deferred CAN errors\nPASS UART failure policy\nPASS queued outage and recovery\nPASS receive tick and rollover\nPASS optional UART and timeout\nPASS deferred counter saturation\nPASS null argument handling\n15 tests, 0 failed assertions\n"
+    }
+  ]
+}</script>
+  <script>
+  (() => {
+    'use strict';
+    const $ = (id) => document.getElementById(id);
+    const descriptions = {
+      none: { label: 'Nominal traffic', hint: 'Establish the baseline', title: 'A clean path to UART.', description: 'Follow valid frames through validation, sequence tracking, and accepted-only output.', goal: 'Establish the expected behavior before injecting faults: each accepted frame has an actual recorded UART row.', explain: 'The core uses explicit byte order and integer engineering units. Acceptance depends on CRC, semantic checks, and receiver state—not simply receipt of a CAN frame.' },
+      crc: { label: 'CRC corruption', hint: 'Detect changed bytes', title: 'One changed bit. A clear rejection.', description: 'The simulator changes a speed byte without updating the CRC. Inspect the rejection and subsequent recovery.', goal: 'Verify that a corrupted payload is not forwarded. Then inspect the following sequence mismatch and the next accepted sample.', explain: 'A corrupt frame does not advance the accepted sequence. The following valid but unexpected sequence is rejected once and becomes the new baseline. Recovery is visible in the next UART row.' },
+      range: { label: 'Semantic range', hint: 'Go beyond the checksum', title: 'Valid CRC. Invalid measurement.', description: 'The injected speed is outside the permitted range, even though its CRC has been recomputed.', goal: 'Show why payload integrity and semantic validity are separate checks. The impossible sample and the following discontinuity must not produce UART output.', explain: 'A correct checksum cannot establish that a measurement is plausible. Engineering bounds reject the sample; sequence recovery remains explicit and observable.' },
+      sequence: { label: 'Sequence jump', hint: 'Reject, then resynchronize', title: 'Detect the gap. Recover deliberately.', description: 'A deliberate sequence jump exercises the receiver’s reject-once resynchronization policy.', goal: 'Inspect the discontinuous frame, confirm there is no UART row, and step forward to the next accepted frame.', explain: 'On a valid unexpected sequence, the receiver records a sequence error and adopts the new baseline. It does not forward that frame or refresh the last accepted timestamp.' },
+      timeout: { label: 'Receive timeout', hint: 'Keep outage evidence', title: 'An outage can end with recovery.', description: 'The recorded timeout event captures the elapsed interval; the next valid in-order frame can still be accepted.', goal: 'Read the captured timeout event and distinguish an outage counter from frame rejection. All valid frames can be accepted while a timeout event is recorded.', explain: 'Timeout is measured since the last accepted frame, including the normal inter-frame interval. The captured event reports the actual elapsed value. Recovery clears the active timeout state without erasing its count.' },
+      can: { label: 'CAN controller error', hint: 'Handle missing delivery', title: 'No payload is also an outcome.', description: 'The controller-error hook is exercised and one frame is not delivered. Inspect how the sequence recovers afterward.', goal: 'Confirm that a controller error produces neither invented payload bytes nor UART output. Then inspect the next sequence rejection and subsequent acceptance.', explain: 'Controller diagnostics and payload validation are separate paths. This is a host-injected error-hook call; it does not reproduce electrical bus faults or prove bus-off recovery on hardware.' }
+    };
+    let data;
+    try {
+      data = JSON.parse($('demo-data').textContent);
+      if (data.schema_version !== 1 || !Array.isArray(data.scenarios) || !data.scenarios.length || !Array.isArray(data.suites)) throw new Error('Unsupported or incomplete capture.');
+      for (const scene of data.scenarios) if (!descriptions[scene.id] || !Array.isArray(scene.frames) || !scene.frames.length || !scene.summary) throw new Error('A scenario has no usable recorded frames.');
+    } catch (error) {
+      $('data-error').hidden = false;
+      $('data-error').textContent = 'Recorded evidence is not embedded in this template. Open the generated demo HTML produced by the project’s demo generator.';
+      document.body.classList.add('disabled-demo');
+      $('download').disabled = true;
+      return;
+    }
+    let sceneIndex = 0;
+    let frameIndex = 0;
+    let timer = null;
+    const fields = ['Sequence', 'Speed LSB', 'Speed MSB', 'Coolant', 'Battery LSB', 'Battery MSB', 'Flags', 'CRC'];
+    const counterNames = [['accepted', 'Accepted'], ['crc', 'CRC'], ['range', 'Range'], ['sequence', 'Sequence'], ['timeout', 'Timeout'], ['can', 'CAN error']];
+    const sceneButtons = [];
+    const byteNodes = [];
+    const counters = new Map();
+    const pad = (value) => String(value).padStart(2, '0');
+    const currentScene = () => data.scenarios[sceneIndex];
+    const accepted = (frame) => frame.status === 'ok';
+    function create(tag, className, content) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (content !== undefined) node.textContent = content;
+      return node;
+    }
+    data.scenarios.forEach((scene, index) => {
+      const meta = descriptions[scene.id];
+      const button = create('button', 'scenario-button');
+      button.type = 'button';
+      button.setAttribute('aria-pressed', 'false');
+      button.setAttribute('aria-controls', 'frame-viewer');
+      button.append(create('span', 'scenario-n', pad(index + 1)));
+      const name = create('span', 'scenario-name', meta.label);
+      name.append(create('span', 'scenario-hint', meta.hint));
+      button.append(name, create('span', 'scenario-arrow', '↗'));
+      button.addEventListener('click', () => { pause(); sceneIndex = index; frameIndex = 0; renderScene(); });
+      $('scenario-list').append(button);
+      sceneButtons.push(button);
+    });
+    fields.forEach((label, index) => {
+      const cell = create('div', 'byte-cell' + (index === 0 ? ' seq' : index === 7 ? ' crc' : ''));
+      const value = create('div', 'byte-value', '—');
+      cell.append(create('div', 'byte-index', 'BYTE ' + index), value, create('div', 'byte-field', label));
+      $('payload-grid').append(cell);
+      byteNodes.push({ cell, value });
+    });
+    counterNames.forEach(([key, name]) => {
+      const counter = create('div', 'counter');
+      const value = create('div', 'counter-value', '0');
+      counter.append(value, create('div', 'counter-label', name));
+      $('counter-bar').append(counter);
+      counters.set(key, value);
+    });
+    function isStart() { return frameIndex === 0 && (!$('walkthrough').checked || sceneIndex === 0); }
+    function isEnd() { return frameIndex === currentScene().frames.length - 1 && (!$('walkthrough').checked || sceneIndex === data.scenarios.length - 1); }
+    function updateControls() {
+      $('previous').disabled = isStart();
+      $('next').disabled = isEnd();
+      $('play-label').textContent = timer ? 'Pause' : 'Play';
+      $('play-glyph').textContent = timer ? 'Ⅱ' : '▶';
+      $('play').setAttribute('aria-label', timer ? 'Pause recorded frames' : 'Play recorded frames');
+    }
+    function pause() { if (timer !== null) window.clearInterval(timer); timer = null; updateControls(); }
+    function step(direction, automatic = false) {
+      if (!automatic) pause();
+      const scene = currentScene();
+      if (direction > 0 && frameIndex < scene.frames.length - 1) frameIndex += 1;
+      else if (direction < 0 && frameIndex > 0) frameIndex -= 1;
+      else if ($('walkthrough').checked && sceneIndex + direction >= 0 && sceneIndex + direction < data.scenarios.length) {
+        sceneIndex += direction;
+        frameIndex = direction > 0 ? 0 : currentScene().frames.length - 1;
+        renderScene();
+        return;
+      } else { pause(); return; }
+      renderFrame();
+      if (automatic && isEnd()) pause();
+    }
+    function togglePlay() {
+      if (timer !== null) { pause(); return; }
+      if (isEnd()) {
+        if ($('walkthrough').checked) sceneIndex = 0;
+        frameIndex = 0;
+        renderScene();
+      }
+      timer = window.setInterval(() => step(1, true), 1500);
+      updateControls();
+    }
+    function renderFrame() {
+      const scene = currentScene();
+      const frame = scene.frames[frameIndex];
+      const hasPayload = Array.isArray(frame.payload) && frame.payload.length === 8;
+      const isAccepted = accepted(frame);
+      $('frame-position').textContent = pad(frameIndex + 1) + ' / ' + pad(scene.frames.length);
+      $('payload-grid').classList.toggle('missing-payload', !hasPayload);
+      byteNodes.forEach(({ cell, value }, index) => {
+        value.textContent = hasPayload ? String(frame.payload[index]) : '—';
+        cell.classList.toggle('fault-byte', hasPayload && !isAccepted && ((frame.status === 'crc mismatch' && (index === 1 || index === 7)) || (frame.status === 'value out of range' && (index === 1 || index === 2)) || (frame.status === 'sequence mismatch' && index === 0)));
+      });
+      $('dlc-label').textContent = hasPayload ? '8-BYTE PAYLOAD' : 'NO PAYLOAD DELIVERED';
+      $('payload-caption').textContent = hasPayload ? 'Captured payload · hexadecimal · little-endian fields' : 'The controller did not deliver a payload for this entry.';
+      $('decision').classList.toggle('rejected', !isAccepted);
+      $('decision-icon').textContent = isAccepted ? '✓' : '×';
+      $('decision-name').textContent = isAccepted ? 'Accepted by the receiver' : hasPayload ? 'Rejected by the receiver' : 'No frame delivered';
+      $('decision-reason').textContent = 'Recorded status: ' + String(frame.status);
+      $('status-tag').textContent = isAccepted ? 'ACCEPTED' : hasPayload ? 'REJECTED' : 'CAN ERROR';
+      const hasUART = typeof frame.uart === 'string' && frame.uart.length > 0;
+      $('uart').classList.toggle('suppressed', !hasUART);
+      $('uart-output').textContent = hasUART ? frame.uart : 'No UART row in the captured output for this entry.';
+      Array.from($('timeline').children).forEach((button, index) => button.setAttribute('aria-current', String(index === frameIndex)));
+      $('announcement').textContent = descriptions[scene.id].label + ', frame ' + frame.index + ': ' + frame.status + (hasUART ? '. UART row present.' : '. No UART row.');
+      updateControls();
+    }
+    function renderScene() {
+      const scene = currentScene();
+      const meta = descriptions[scene.id];
+      sceneButtons.forEach((button, index) => button.setAttribute('aria-pressed', String(index === sceneIndex)));
+      $('scene-kicker').textContent = pad(sceneIndex + 1) + ' / ' + meta.label;
+      $('scene-title').textContent = meta.title;
+      $('scene-description').textContent = meta.description;
+      $('test-objective').textContent = meta.goal;
+      $('explain-note').textContent = meta.explain;
+      $('timeline').replaceChildren();
+      scene.frames.forEach((frame, index) => {
+        const button = create('button', 'timeline-button' + (accepted(frame) ? '' : ' rejected'), 'F' + frame.index);
+        button.type = 'button';
+        button.setAttribute('aria-label', 'Frame ' + frame.index + ': ' + frame.status);
+        button.title = 'Frame ' + frame.index + ' · ' + frame.status;
+        button.addEventListener('click', () => { pause(); frameIndex = index; renderFrame(); });
+        $('timeline').append(button);
+      });
+      counterNames.forEach(([key]) => {
+        const node = counters.get(key);
+        node.textContent = String(scene.summary[key] ?? '—');
+        node.className = 'counter-value' + (key === 'accepted' ? ' accepted-count' : Number(scene.summary[key]) > 0 ? ' nonzero-error' : '');
+      });
+      const events = Array.isArray(scene.events) ? scene.events : [];
+      $('scenario-events').hidden = events.length === 0;
+      $('scenario-events').textContent = 'CAPTURED EVENTS · COMPLETE SCENARIO\n' + events.join('\n');
+      $('scenario-command').textContent = (scene.command || []).join(' ');
+      $('scenario-log').textContent = scene.stdout || '';
+      $('scenario-log-meta').textContent = meta.label + ' · exit ' + scene.exit_code;
+      renderFrame();
+    }
+    data.suites.forEach((suite) => {
+      const details = create('details', 'disclosure');
+      const summary = create('summary', '', suite.id === 'hal' ? 'HAL mock integration tests' : 'C protocol tests');
+      const passed = (suite.cases || []).filter((item) => item.status === 'PASS').length;
+      summary.append(create('span', 'summary-meta', passed + '/' + suite.total + ' passed · exit ' + suite.exit_code));
+      const body = create('div', 'disclosure-body');
+      body.append(create('p', '', suite.id === 'hal' ? 'The actual STM32 adapter linked to host HAL/CMSIS doubles. These cases verify logic, not physical timing.' : 'The portable C protocol and receiver exercised by the compiled host test executable.'));
+      const list = create('ul', 'test-list');
+      (suite.cases || []).forEach((item) => { const row = create('li'); row.append(create('span', 'test-status', item.status), create('span', '', item.name)); list.append(row); });
+      const log = create('pre', 'log', suite.stdout || '');
+      log.tabIndex = 0;
+      log.setAttribute('aria-label', (suite.title || suite.id) + ' captured output');
+      body.append(list, create('code', 'command', (suite.command || []).join(' ')), log);
+      details.append(summary, body);
+      $('test-suites').append(details);
+    });
+    $('scenario-count').textContent = pad(data.scenarios.length);
+    $('test-count').replaceChildren(document.createTextNode(String(data.suites.reduce((sum, suite) => sum + Number(suite.total || 0), 0)) + ' '), create('span', '', 'cases'));
+    $('capture-date').textContent = 'CAPTURED ' + String(data.generated_at || 'time not recorded');
+    const provenance = {};
+    ['schema_version', 'generated_at', 'git_revision', 'working_tree_dirty', 'source_sha256', 'binary_sha256'].forEach((key) => { if (Object.prototype.hasOwnProperty.call(data, key)) provenance[key] = data[key]; });
+    $('provenance').textContent = JSON.stringify(provenance, null, 2);
+    const treeState = data.working_tree_dirty === true ? 'working tree modified at capture' : data.working_tree_dirty === false ? 'clean working tree at capture' : 'working-tree state unknown at capture';
+    $('revision-note').textContent = 'REV ' + String(data.git_revision || 'unknown').slice(0, 12) + ' · ' + treeState;
+    $('previous').addEventListener('click', () => step(-1));
+    $('next').addEventListener('click', () => step(1));
+    $('play').addEventListener('click', togglePlay);
+    $('reset').addEventListener('click', () => { pause(); if ($('walkthrough').checked) sceneIndex = 0; frameIndex = 0; renderScene(); });
+    $('walkthrough').addEventListener('change', updateControls);
+    $('frame-viewer').addEventListener('keydown', (event) => {
+      if (event.target !== $('frame-viewer') || event.altKey || event.ctrlKey || event.metaKey) return;
+      if (event.key === 'ArrowRight') { event.preventDefault(); step(1); }
+      else if (event.key === 'ArrowLeft') { event.preventDefault(); step(-1); }
+      else if (event.key === ' ') { event.preventDefault(); togglePlay(); }
+    });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+    $('download').addEventListener('click', () => {
+      const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2) + '\n'], { type: 'application/json' }));
+      const link = create('a');
+      link.href = url;
+      link.download = 'can-telemetry-evidence.json';
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      $('announcement').textContent = 'Evidence JSON download started.';
+    });
+    renderScene();
+  })();
+  </script>
+</body>
+</html>

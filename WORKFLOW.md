@@ -14,10 +14,16 @@ Repository: [RohitPatel97/can-vehicle-telemetry](https://github.com/RohitPatel97
   has been processed, with an atomic queue-empty/tick snapshot.
 - Eight protocol cases, fifteen HAL integration cases, thirteen Python reference
   cases, and six CTest simulator scenarios with expected counter summaries.
+- Offline demo capture runner with six recorded simulator scenarios, compiled
+  protocol/HAL suite results, ten capture-validation tests, and presenter notes.
 - [README](README.md) project breakdown and [test case guide](docs/test-cases.md)
   describe the problem, solution, inputs and expected evidence.
 
 ## Verification commands
+
+November 13, 2026 local result: all 8 CTest entries and 23 Python tests passed
+(13 protocol/reference cases plus 10 demo capture-validation cases). The
+simulator was rebuilt before capturing the demo; execution remains host-only.
 
 October 1, 2026 local result: 8 C protocol cases, 15 HAL mock cases,
 13 Python cases, and 8/8 CTest entries passed. A Windows CMake/Ninja build
@@ -40,6 +46,44 @@ CI adds GCC, Clang and GCC AddressSanitizer/UndefinedBehaviorSanitizer builds.
 Check the [latest CI run](https://github.com/RohitPatel97/can-vehicle-telemetry/actions)
 against the commit being reviewed; a configured job is not evidence that it ran.
 Local execution evidence is recorded in the README verification snapshot.
+
+## Change record — 2026-11-13
+
+- **Problem:** the project had executable tests and simulator logs but no
+  presentation-ready walkthrough connecting fault diagnosis, reliability
+  decisions, and evidence for an interview discussion.
+- **Solution:** add a standard-library Python runner that captures six scenarios
+  from the compiled simulator and the protocol/HAL suites. It validates the
+  records before embedding them in an offline interactive HTML viewer. The
+  viewer exposes payload bytes, receiver decisions, UART rows, scenario totals,
+  raw logs, provenance, and a separately labelled backlog explanation.
+- **Regression cases:** ten new Python tests reject incomplete or contradictory
+  logs, forwarded rejected frames, incorrect UART values, false suite success,
+  missing binaries, subprocess failures/timeouts, and unsafe JSON embedding.
+  The simulator timeout message now reports 271 ms, including the normal 20 ms
+  interval, and capture validation rejects the previous 251 ms diagnostic.
+- **Observed result:** rebuilt the simulator with the existing Windows
+  CMake/Ninja Zig configuration; all 8 CTest entries and 23 Python tests passed.
+  `python scripts/create_demo.py --build-dir build-review` captured all six
+  scenarios, 8 protocol cases, and 15 HAL mock cases. Browser verification checked
+  all 36 frame decisions/payloads/UART rows against the evidence JSON, keyboard
+  playback, cross-scenario navigation, and the matching JSON download. Desktop
+  and 390-pixel mobile layouts had no horizontal overflow or script errors;
+  offline playback made no external network requests.
+- **Documentation:** README links to the demo; `docs/demo-walkthrough.md` provides
+  a five-minute presenter guide and technical follow-up explanations. The
+  framing comes from interview preparation themes, not an interview transcript.
+- **Remaining limits:** playback is recorded host execution, not a live CAN bus.
+  HAL timing inputs are synthetic. Physical CAN/UART measurements and a full
+  Cube firmware build remain pending. Hashes identify captured source/binary
+  files but do not prove how an arbitrary binary was built.
+- **Initial capture:** the offline deliverable was produced locally against
+  the previously published baseline
+  [`cbab992`](https://github.com/RohitPatel97/can-vehicle-telemetry/commit/cbab992e21dae5d1ae285c5838a61f6ce6005c6b).
+  Embedded capture metadata records that the working tree contained changes.
+  The live GitHub Pages workflow generates fresh evidence from its deployment
+  commit after GCC, Clang, and sanitizer jobs pass. Only generated HTML and
+  evidence JSON are included in the Pages artifact.
 
 ## Change record — 2026-10-01
 

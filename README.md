@@ -10,6 +10,10 @@ It encodes vehicle speed, coolant temperature, and battery voltage into one
 eight-byte frame, validates the frame on receipt, and forwards only accepted
 telemetry over UART.
 
+**[Open the interactive demo](https://rohitpatel97.github.io/can-vehicle-telemetry/)**
+— no installation required. Explore six recorded scenarios, inspect frame
+decisions and UART output, and review the underlying test evidence.
+
 The deployable core is allocation-free C11 with no STM32 dependencies. A C++17
 host simulator injects faults, a dependency-free Python implementation acts as
 an executable protocol oracle, and a narrow STM32Cube HAL adapter demonstrates
@@ -135,6 +139,27 @@ still detecting a malicious or faulty sender that recomputes a valid CRC over
 semantically impossible data.
 
 ## Quick start
+
+### Open the offline demo
+
+Use the [live demo](https://rohitpatel97.github.io/can-vehicle-telemetry/) or open
+[`demo/index.html`](demo/index.html) in a browser for a guided replay of
+actual compiled host execution. Select six normal/fault scenarios, inspect
+payload bytes and accepted-only UART output, and review captured protocol/HAL
+test results. The [five-minute presenter guide](docs/demo-walkthrough.md)
+connects the fault behavior to debugging decisions and verification evidence.
+
+After building, regenerate the demo with:
+
+```sh
+python scripts/create_demo.py --build-dir build
+```
+
+The output is a self-contained HTML file and an accompanying evidence JSON.
+Playback is recorded host execution; the HAL backlog explanation uses
+synthetic test inputs. Physical CAN/UART validation remains pending.
+
+### Build requirements
 
 Requirements: CMake 3.20+, a C11/C++17 compiler, and Python 3.10+ for the
 reference suite. Run the commands below from the repository root. To try the
@@ -292,6 +317,16 @@ public receiver/diagnostic state only from that same main context. Multiple
 RTOS consumers require a different synchronization contract.
 
 ## Test evidence
+
+Demo verification snapshot (2026-11-13): all **8 CTest entries** and **23 Python
+tests** passed locally (13 reference tests plus 10 demo capture-validation
+tests). The generated replay includes six simulator runs and the 8 protocol /
+15 HAL mock cases. Browser checks compared all 36 displayed frames to captured
+evidence and verified playback, navigation, download, and desktop/mobile layout.
+The checked-in offline snapshot records the original local capture and its
+dirty-worktree flag. GitHub Pages regenerates its own capture from the published
+commit after GCC, Clang, and sanitizer jobs pass; its revision and source hashes
+identify that deployment's evidence.
 
 | Behavior | C host test | Python oracle test | Simulator/CI |
 |---|:---:|:---:|:---:|
